@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: backend_app
+    environment:
+      ENV: ${ENV}
+      DB_HOST: ${DB_HOST}  # Được xác định trong file .env
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+    ports:
+      - "8080:8080"
+    networks:
+      - app_net
+    profiles:
+      - ${ENV}
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: frontend_app
+    ports:
+      - "3000:80"
+    networks:
+      - app_net
+    profiles:
+      - ${ENV}
+
+  postgres:
+    image: postgres:17
+    container_name: dev_postgres
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - app_net
+    profiles:
+      - dev
+
+volumes:
+  pgdata:
+
+networks:
+  app_net:
