@@ -1,0 +1,17 @@
+[
+    {
+        "method": "POST",
+        "path": "user/login",
+        "handler": "Login",
+        "body": {
+            "username": "string|required|min=8|max=20",
+            "password": "string|required|min=8|max=20"
+        },
+        "description": "API for user login"
+    },
+    {
+        "method": "GET",
+        "path": "user/profile",
+        "handler": "profileService"
+    }
+]
