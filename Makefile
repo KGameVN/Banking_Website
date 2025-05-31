@@ -51,14 +51,13 @@ run-frontend-local:
 
 # Chạy dev bằng Docker Compose
 run-dev:
-	ENV=dev DB_HOST=$(DB_HOST_DEV) docker-compose --profile dev up --build
+	ENV=dev DB_HOST=$(DB_HOST_DEV) docker-compose --profile down
+	ENV=dev DB_HOST=$(DB_HOST_DEV) docker-compose --profile dev up -d --build
 
 # Chạy production
 run-prod:
-	ENV=prod DB_HOST=$(DB_HOST_PROD) docker-compose --profile prod up --build
-
-run-dev-linux:
-	ENV=dev DB_HOST=$(DB_HOST_DEV) docker compose --profile dev up --build
+	ENV=dev DB_HOST=$(DB_HOST_PROD) docker-compose --profile down
+	ENV=prod DB_HOST=$(DB_HOST_PROD) docker-compose --profile prod up -d --build
 
 deploy:
 	./Deploy.sh

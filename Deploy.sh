@@ -1,5 +1,8 @@
 #!/bin/bash
 
-# clone projects
+# update projects
+git pull
 
-git clone git@github.com:KGameVN/Banking_Website.git
+make run-prod
+
+
