@@ -1,9 +1,10 @@
 package main
 
 import (
-	"fmt"
+	"comb.com/banking/controller"
 )
 
 func main() {
-	fmt.Println("Hello")
+	c := controller.GetController()
+	c.Start()
 }
