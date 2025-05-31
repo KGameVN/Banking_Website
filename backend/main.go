@@ -6,5 +6,5 @@ import (
 
 func main() {
 	c := controller.GetController()
-	c.Start();
+	c.Start()
 }

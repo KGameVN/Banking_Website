@@ -60,4 +60,7 @@ run-prod:
 run-dev-linux:
 	ENV=dev DB_HOST=$(DB_HOST_DEV) docker compose --profile dev up --build
 
+deploy:
+	./Deploy.sh
+
 .PHONY: migrate migrate-up migrate-create migrate-status migrate-down ent-gen prepare run-dev run-prod
