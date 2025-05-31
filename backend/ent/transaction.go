@@ -24,7 +24,11 @@ type Transaction struct {
 	// To holds the value of the "To" field.
 	To int `json:"To,omitempty"`
 	// Amount holds the value of the "Amount" field.
-	Amount       int `json:"Amount,omitempty"`
+	Amount int `json:"Amount,omitempty"`
+	// CreatedAt holds the value of the "created_at" field.
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	// UpdatedAt holds the value of the "updated_at" field.
+	UpdatedAt    time.Time `json:"updated_at,omitempty"`
 	selectValues sql.SelectValues
 }
 
@@ -35,7 +39,7 @@ func (*Transaction) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case transaction.FieldID, transaction.FieldFrom, transaction.FieldTo, transaction.FieldAmount:
 			values[i] = new(sql.NullInt64)
-		case transaction.FieldTransactionTime:
+		case transaction.FieldTransactionTime, transaction.FieldCreatedAt, transaction.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -81,6 +85,18 @@ func (t *Transaction) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field Amount", values[i])
 			} else if value.Valid {
 				t.Amount = int(value.Int64)
+			}
+		case transaction.FieldCreatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field created_at", values[i])
+			} else if value.Valid {
+				t.CreatedAt = value.Time
+			}
+		case transaction.FieldUpdatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
+			} else if value.Valid {
+				t.UpdatedAt = value.Time
 			}
 		default:
 			t.selectValues.Set(columns[i], values[i])
@@ -129,6 +145,12 @@ func (t *Transaction) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("Amount=")
 	builder.WriteString(fmt.Sprintf("%v", t.Amount))
+	builder.WriteString(", ")
+	builder.WriteString("created_at=")
+	builder.WriteString(t.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("updated_at=")
+	builder.WriteString(t.UpdatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

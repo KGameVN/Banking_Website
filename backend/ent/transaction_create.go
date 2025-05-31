@@ -26,6 +26,14 @@ func (tc *TransactionCreate) SetTransactionTime(t time.Time) *TransactionCreate 
 	return tc
 }
 
+// SetNillableTransactionTime sets the "TransactionTime" field if the given value is not nil.
+func (tc *TransactionCreate) SetNillableTransactionTime(t *time.Time) *TransactionCreate {
+	if t != nil {
+		tc.SetTransactionTime(*t)
+	}
+	return tc
+}
+
 // SetFrom sets the "From" field.
 func (tc *TransactionCreate) SetFrom(i int) *TransactionCreate {
 	tc.mutation.SetFrom(i)
@@ -44,6 +52,34 @@ func (tc *TransactionCreate) SetAmount(i int) *TransactionCreate {
 	return tc
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (tc *TransactionCreate) SetCreatedAt(t time.Time) *TransactionCreate {
+	tc.mutation.SetCreatedAt(t)
+	return tc
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (tc *TransactionCreate) SetNillableCreatedAt(t *time.Time) *TransactionCreate {
+	if t != nil {
+		tc.SetCreatedAt(*t)
+	}
+	return tc
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (tc *TransactionCreate) SetUpdatedAt(t time.Time) *TransactionCreate {
+	tc.mutation.SetUpdatedAt(t)
+	return tc
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (tc *TransactionCreate) SetNillableUpdatedAt(t *time.Time) *TransactionCreate {
+	if t != nil {
+		tc.SetUpdatedAt(*t)
+	}
+	return tc
+}
+
 // Mutation returns the TransactionMutation object of the builder.
 func (tc *TransactionCreate) Mutation() *TransactionMutation {
 	return tc.mutation
@@ -51,6 +87,7 @@ func (tc *TransactionCreate) Mutation() *TransactionMutation {
 
 // Save creates the Transaction in the database.
 func (tc *TransactionCreate) Save(ctx context.Context) (*Transaction, error) {
+	tc.defaults()
 	return withHooks(ctx, tc.sqlSave, tc.mutation, tc.hooks)
 }
 
@@ -76,6 +113,22 @@ func (tc *TransactionCreate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (tc *TransactionCreate) defaults() {
+	if _, ok := tc.mutation.TransactionTime(); !ok {
+		v := transaction.DefaultTransactionTime()
+		tc.mutation.SetTransactionTime(v)
+	}
+	if _, ok := tc.mutation.CreatedAt(); !ok {
+		v := transaction.DefaultCreatedAt()
+		tc.mutation.SetCreatedAt(v)
+	}
+	if _, ok := tc.mutation.UpdatedAt(); !ok {
+		v := transaction.DefaultUpdatedAt()
+		tc.mutation.SetUpdatedAt(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (tc *TransactionCreate) check() error {
 	if _, ok := tc.mutation.TransactionTime(); !ok {
@@ -89,6 +142,12 @@ func (tc *TransactionCreate) check() error {
 	}
 	if _, ok := tc.mutation.Amount(); !ok {
 		return &ValidationError{Name: "Amount", err: errors.New(`ent: missing required field "Transaction.Amount"`)}
+	}
+	if _, ok := tc.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Transaction.created_at"`)}
+	}
+	if _, ok := tc.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Transaction.updated_at"`)}
 	}
 	return nil
 }
@@ -132,6 +191,14 @@ func (tc *TransactionCreate) createSpec() (*Transaction, *sqlgraph.CreateSpec) {
 		_spec.SetField(transaction.FieldAmount, field.TypeInt, value)
 		_node.Amount = value
 	}
+	if value, ok := tc.mutation.CreatedAt(); ok {
+		_spec.SetField(transaction.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
+	}
+	if value, ok := tc.mutation.UpdatedAt(); ok {
+		_spec.SetField(transaction.FieldUpdatedAt, field.TypeTime, value)
+		_node.UpdatedAt = value
+	}
 	return _node, _spec
 }
 
@@ -153,6 +220,7 @@ func (tcb *TransactionCreateBulk) Save(ctx context.Context) ([]*Transaction, err
 	for i := range tcb.builders {
 		func(i int, root context.Context) {
 			builder := tcb.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*TransactionMutation)
 				if !ok {

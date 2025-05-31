@@ -6,7 +6,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var jwtSecret = []byte("your-secret-key") // bạn nên lưu secret này qua biến môi trường
+var jwtSecret = []byte("jwt123") // bạn nên lưu secret này qua biến môi trường
 
 func GenerateJWT(userID int, username string) (string, error) {
 	claims := jwt.MapClaims{

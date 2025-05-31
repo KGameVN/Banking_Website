@@ -17,3 +17,6 @@ type User func(*sql.Selector)
 
 // UserAccount is the predicate function for useraccount builders.
 type UserAccount func(*sql.Selector)
+
+// UserProfile is the predicate function for userprofile builders.
+type UserProfile func(*sql.Selector)

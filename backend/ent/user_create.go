@@ -28,12 +28,6 @@ func (uc *UserCreate) SetUsername(s string) *UserCreate {
 	return uc
 }
 
-// SetFullname sets the "fullname" field.
-func (uc *UserCreate) SetFullname(s string) *UserCreate {
-	uc.mutation.SetFullname(s)
-	return uc
-}
-
 // SetEmail sets the "email" field.
 func (uc *UserCreate) SetEmail(s string) *UserCreate {
 	uc.mutation.SetEmail(s)
@@ -43,20 +37,6 @@ func (uc *UserCreate) SetEmail(s string) *UserCreate {
 // SetPassword sets the "password" field.
 func (uc *UserCreate) SetPassword(s string) *UserCreate {
 	uc.mutation.SetPassword(s)
-	return uc
-}
-
-// SetBirthday sets the "birthday" field.
-func (uc *UserCreate) SetBirthday(t time.Time) *UserCreate {
-	uc.mutation.SetBirthday(t)
-	return uc
-}
-
-// SetNillableBirthday sets the "birthday" field if the given value is not nil.
-func (uc *UserCreate) SetNillableBirthday(t *time.Time) *UserCreate {
-	if t != nil {
-		uc.SetBirthday(*t)
-	}
 	return uc
 }
 
@@ -181,14 +161,6 @@ func (uc *UserCreate) check() error {
 			return &ValidationError{Name: "username", err: fmt.Errorf(`ent: validator failed for field "User.username": %w`, err)}
 		}
 	}
-	if _, ok := uc.mutation.Fullname(); !ok {
-		return &ValidationError{Name: "fullname", err: errors.New(`ent: missing required field "User.fullname"`)}
-	}
-	if v, ok := uc.mutation.Fullname(); ok {
-		if err := user.FullnameValidator(v); err != nil {
-			return &ValidationError{Name: "fullname", err: fmt.Errorf(`ent: validator failed for field "User.fullname": %w`, err)}
-		}
-	}
 	if _, ok := uc.mutation.Email(); !ok {
 		return &ValidationError{Name: "email", err: errors.New(`ent: missing required field "User.email"`)}
 	}
@@ -236,10 +208,6 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec.SetField(user.FieldUsername, field.TypeString, value)
 		_node.Username = value
 	}
-	if value, ok := uc.mutation.Fullname(); ok {
-		_spec.SetField(user.FieldFullname, field.TypeString, value)
-		_node.Fullname = value
-	}
 	if value, ok := uc.mutation.Email(); ok {
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
 		_node.Email = value
@@ -247,10 +215,6 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := uc.mutation.Password(); ok {
 		_spec.SetField(user.FieldPassword, field.TypeString, value)
 		_node.Password = value
-	}
-	if value, ok := uc.mutation.Birthday(); ok {
-		_spec.SetField(user.FieldBirthday, field.TypeTime, value)
-		_node.Birthday = value
 	}
 	if value, ok := uc.mutation.CreatedAt(); ok {
 		_spec.SetField(user.FieldCreatedAt, field.TypeTime, value)

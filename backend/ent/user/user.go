@@ -16,14 +16,10 @@ const (
 	FieldID = "id"
 	// FieldUsername holds the string denoting the username field in the database.
 	FieldUsername = "username"
-	// FieldFullname holds the string denoting the fullname field in the database.
-	FieldFullname = "fullname"
 	// FieldEmail holds the string denoting the email field in the database.
 	FieldEmail = "email"
 	// FieldPassword holds the string denoting the password field in the database.
 	FieldPassword = "password"
-	// FieldBirthday holds the string denoting the birthday field in the database.
-	FieldBirthday = "birthday"
 	// FieldCreatedAt holds the string denoting the created_at field in the database.
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
@@ -54,10 +50,8 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldUsername,
-	FieldFullname,
 	FieldEmail,
 	FieldPassword,
-	FieldBirthday,
 	FieldCreatedAt,
 	FieldUpdatedAt,
 }
@@ -86,8 +80,6 @@ func ValidColumn(column string) bool {
 var (
 	// UsernameValidator is a validator for the "username" field. It is called by the builders before save.
 	UsernameValidator func(string) error
-	// FullnameValidator is a validator for the "fullname" field. It is called by the builders before save.
-	FullnameValidator func(string) error
 	// PasswordValidator is a validator for the "password" field. It is called by the builders before save.
 	PasswordValidator func(string) error
 	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
@@ -111,11 +103,6 @@ func ByUsername(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUsername, opts...).ToFunc()
 }
 
-// ByFullname orders the results by the fullname field.
-func ByFullname(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldFullname, opts...).ToFunc()
-}
-
 // ByEmail orders the results by the email field.
 func ByEmail(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldEmail, opts...).ToFunc()
@@ -124,11 +111,6 @@ func ByEmail(opts ...sql.OrderTermOption) OrderOption {
 // ByPassword orders the results by the password field.
 func ByPassword(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPassword, opts...).ToFunc()
-}
-
-// ByBirthday orders the results by the birthday field.
-func ByBirthday(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldBirthday, opts...).ToFunc()
 }
 
 // ByCreatedAt orders the results by the created_at field.

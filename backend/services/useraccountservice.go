@@ -5,10 +5,10 @@ import (
 
 	"comb.com/banking/ent/user"
 	"comb.com/banking/ent/useraccount"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
-func (s Service) GetAccountInfo(c echo.Context) error {
+func (s *Service) GetAccountInfo(c echo.Context) error {
 	userID := c.Get("userID").(int)
 
 	ctx := c.Request().Context()
@@ -66,7 +66,6 @@ func (s Service) Transaction(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, echo.Map{"balance": newBalance})
 }
-
 
 func (s Service) Transfer(c echo.Context) error {
 	userID := c.Get("userID").(int)

@@ -2,15 +2,12 @@ package controller
 
 import (
 	"log"
-	"net/http"
-	"reflect"
-	"strings"
 	"sync"
 
-	"comb.com/banking/middleware"
-	"comb.com/banking/routes"
+	a "comb.com/banking/middleware"
 	"comb.com/banking/services"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
+	mid "github.com/labstack/echo/v4/middleware"
 )
 
 type Controller struct {
@@ -65,6 +62,7 @@ func (c *Controller) Start() {
 	// if err := c.e.StartTLS(":8443", certFile, keyFile); err != nil {
 	// 	log.Fatal("Không thể khởi động server HTTPS: ", err)
 	// }
+	c.e.Use(mid.CORS())
 	log.Println("Server đang chạy tại http://localhost:8080")
 	if err := c.e.Start(":8080"); err != nil {
 		log.Fatal("Không thể khởi động server: ", err)
@@ -73,63 +71,11 @@ func (c *Controller) Start() {
 
 // setupRoutes khai báo các endpoint
 func (c *Controller) setupRoutes() error {
-	// load process
-	router, err := routes.GetRouteManager()
-	if err != nil {
-		return err
-	}
-	ctrlValue := reflect.ValueOf(c.services)
 
-	for _, r := range router.Routes {
-		path := ensureSlash(r.Path)
+	c.e.POST("/login", c.services.Login)
 
-		handlerMethod := ctrlValue.MethodByName(r.Handler)
-		if !handlerMethod.IsValid() {
-			log.Printf("❌ Không tìm thấy handler: %s\n", r.Handler)
-			continue
-		}
-		// Convert reflect.Value to echo.HandlerFunc
-		handlerFunc, ok := handlerMethod.Interface().(func(echo.Context) error)
-		if !ok {
-			log.Printf("❌ Handler %s không đúng định dạng (func(echo.Context) error)\n", r.Handler)
-			continue
-		}
-		c.registerRoute(r.Method, path, handlerFunc, r.AuthRequired)
-		log.Printf("✅ Đã thêm vào handler: %s\n", r.Handler)
-	}
+	userGroup := c.e.Group("/account", a.JWTMiddleware)
+	userGroup.GET("/trans_history", c.services.GetTransHistory)
+	userGroup.POST("/transfer", c.services.Transfer)
 	return nil
-}
-
-func (c Controller) registerRoute(method, path string, handler echo.HandlerFunc, useJWT bool) {
-	method = strings.ToUpper(method)
-
-	// Chọn middleware dựa trên yêu cầu
-	middlewares := []echo.MiddlewareFunc{}
-	if useJWT {
-		middlewares = append(middlewares, middleware.JWTMiddleware)
-	}
-
-	// Ánh xạ method HTTP với function của Echo
-	switch method {
-	case http.MethodGet:
-		c.e.GET(path, handler, middlewares...)
-	case http.MethodPost:
-		c.e.POST(path, handler, middlewares...)
-	case http.MethodPut:
-		c.e.PUT(path, handler, middlewares...)
-	case http.MethodDelete:
-		c.e.DELETE(path, handler, middlewares...)
-	default:
-		log.Printf("❌ Method không hỗ trợ: %s\n", method)
-	}
-	for _, r := range c.e.Routes() {
-		log.Printf("Method: %s, Path: %s, Name: %s", r.Method, r.Path, r.Name)
-	}
-}
-
-func ensureSlash(path string) string {
-	if !strings.HasPrefix(path, "/") {
-		return "/" + path
-	}
-	return path
 }

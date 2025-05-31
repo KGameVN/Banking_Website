@@ -6,9 +6,8 @@ export default function Page() {
     <div>
       <nav className={style.container}>
         <span>Welcome To World Bank</span>
-        <LoginWrapper /></nav>
-      <div className={style.mainview}>
-      </div>
+          <LoginWrapper /></nav>
+      <div className={style.mainview}></div>
     </div>
   );
 }
