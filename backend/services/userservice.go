@@ -8,7 +8,7 @@ import (
 	"comb.com/banking/ent"
 	"comb.com/banking/ent/user"
 	"comb.com/banking/utils"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 func (s Service) Login(c echo.Context) error {
@@ -66,7 +66,18 @@ func (s Service) Login(c echo.Context) error {
 			"id":       foundUser.ID,
 			"username": foundUser.Username,
 			"email":    foundUser.Email,
-			"fullname": foundUser.Fullname,
 		},
+	})
+}
+
+func (s *Service) ProfileService(c echo.Context) error {
+	return c.JSON(http.StatusOK, echo.Map{
+		"message": "hello",
+	})
+}
+
+func (s *Service) GetTransHistory(c echo.Context) error {
+	return c.JSON(http.StatusOK, echo.Map{
+		"message": "GetTransHistory",
 	})
 }

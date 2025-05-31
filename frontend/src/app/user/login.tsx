@@ -1,18 +1,21 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter} from "next/navigation";
+import  Image  from "next/image";
 
 export default function Login() {
   const [open, setOpen] = useState(false);
   const [username, setUsername] = useState(""); // Đổi email thành username
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
-      const res = await fetch("http://localhost:8080/api/login", {
+      const res = await fetch("http://localhost:8080/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -25,6 +28,7 @@ export default function Login() {
       if (res.ok) {
         console.log("Login success:", data);
         setOpen(false);
+        router.push("/dashboard");
       } else {
         console.error("Login failed:", data.message);
         alert("Login failed: " + (data.message || "Unknown error"));
@@ -53,7 +57,7 @@ export default function Login() {
             >
               ✕
             </button>
-            <img
+            <Image
               src="/images/icon/banking.png"
               alt="Logo"
               className="w-16 h-16 mx-auto mb-4"

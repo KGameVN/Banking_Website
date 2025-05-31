@@ -2,16 +2,34 @@
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(255) NOT NULL UNIQUE,
-    fullname VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     logintoken VARCHAR(255),
     expiredtime VARCHAR(255),
-    birthday TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+--Amount
+CREATE TABLE user_accounts (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    account_number VARCHAR(20) UNIQUE NOT NULL,
+    balance NUMERIC(18,2) DEFAULT 0.00,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
+-- Profile
+CREATE TYPE gender_type as ENUM ('male', 'female');
+CREATE TABLE user_profile (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    firstname VARCHAR(20),
+    lastname VARCHAR(20),
+    cmnd VARCHAR(20),
+    address VARCHAR(20),
+    gender  gender_type,
+    birthday VARCHAR(20)
+);
 -- Trigger to automatically update updated_at on each update
 CREATE OR REPLACE FUNCTION update_updated_at()
 RETURNS TRIGGER AS $$
@@ -28,20 +46,33 @@ CREATE INDEX idx_users_email ON users (email);
 -- default value
 INSERT INTO users (
     username,
-    fullname,
     email,
     password,
-    logintoken,
-    expiredtime,
-    birthday
+    logintoken
 ) VALUES (
     'User1',
-    'Here is user',
     'user@test.com',
     '1234',
-    'token_123456',
-    '2025-12-31 23:59:59',
-    '1990-01-01 00:00:00'
+    'token_123456'
+), (
+    'User2',
+    'user2@test.com',
+    '1111',
+    'token123'
+);
+
+INSERT INTO user_accounts (
+    user_id,
+    account_number,
+    balance
+) VALUES (
+    1,
+    1,
+    100
+),(
+    2,
+    200,
+    1000
 );
 
 --Transaction
@@ -71,11 +102,4 @@ CREATE TABLE login_tokens (
 -- You may want to add an index for the `user_id` field for fast lookups
 CREATE INDEX idx_user_id ON login_tokens(user_id);
 
---Amount
-CREATE TABLE user_accounts (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-    account_number VARCHAR(20) UNIQUE NOT NULL,
-    balance NUMERIC(18,2) DEFAULT 0.00,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+

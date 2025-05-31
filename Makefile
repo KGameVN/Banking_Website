@@ -9,6 +9,9 @@ ifeq ($(ENV), dev)
 else ifeq ($(ENV), prod)
 	DB_HOST := $(DB_HOST_PROD)
 endif
+init: 
+	@cd backend && go get github.com/olekukonko/tablewriter
+	@cd backend && go get github.com/spf13/cobra 
 
 # Lệnh để tạo migration mới từ schema Ent
 migrate-create:
@@ -51,16 +54,7 @@ run-frontend-local:
 
 # Chạy dev bằng Docker Compose
 run-dev:
-	ENV=dev DB_HOST=$(DB_HOST_DEV) docker-compose --profile dev up --build
+	ENV=dev DB_HOST=$(DB_HOST_DEV) docker-compose --profile down
+	ENV=dev DB_HOST=$(DB_HOST_DEV) docker-compose --profile dev up -d --build
 
 # Chạy production
-run-prod:
-	ENV=prod DB_HOST=$(DB_HOST_PROD) docker-compose --profile prod up --build
-
-run-dev-linux:
-	ENV=dev DB_HOST=$(DB_HOST_DEV) docker compose --profile dev up --build
-
-deploy:
-	./Deploy.sh
-
-.PHONY: migrate migrate-up migrate-create migrate-status migrate-down ent-gen prepare run-dev run-prod

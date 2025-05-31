@@ -44,20 +44,6 @@ func (uu *UserUpdate) SetNillableUsername(s *string) *UserUpdate {
 	return uu
 }
 
-// SetFullname sets the "fullname" field.
-func (uu *UserUpdate) SetFullname(s string) *UserUpdate {
-	uu.mutation.SetFullname(s)
-	return uu
-}
-
-// SetNillableFullname sets the "fullname" field if the given value is not nil.
-func (uu *UserUpdate) SetNillableFullname(s *string) *UserUpdate {
-	if s != nil {
-		uu.SetFullname(*s)
-	}
-	return uu
-}
-
 // SetEmail sets the "email" field.
 func (uu *UserUpdate) SetEmail(s string) *UserUpdate {
 	uu.mutation.SetEmail(s)
@@ -83,26 +69,6 @@ func (uu *UserUpdate) SetNillablePassword(s *string) *UserUpdate {
 	if s != nil {
 		uu.SetPassword(*s)
 	}
-	return uu
-}
-
-// SetBirthday sets the "birthday" field.
-func (uu *UserUpdate) SetBirthday(t time.Time) *UserUpdate {
-	uu.mutation.SetBirthday(t)
-	return uu
-}
-
-// SetNillableBirthday sets the "birthday" field if the given value is not nil.
-func (uu *UserUpdate) SetNillableBirthday(t *time.Time) *UserUpdate {
-	if t != nil {
-		uu.SetBirthday(*t)
-	}
-	return uu
-}
-
-// ClearBirthday clears the value of the "birthday" field.
-func (uu *UserUpdate) ClearBirthday() *UserUpdate {
-	uu.mutation.ClearBirthday()
 	return uu
 }
 
@@ -224,11 +190,6 @@ func (uu *UserUpdate) check() error {
 			return &ValidationError{Name: "username", err: fmt.Errorf(`ent: validator failed for field "User.username": %w`, err)}
 		}
 	}
-	if v, ok := uu.mutation.Fullname(); ok {
-		if err := user.FullnameValidator(v); err != nil {
-			return &ValidationError{Name: "fullname", err: fmt.Errorf(`ent: validator failed for field "User.fullname": %w`, err)}
-		}
-	}
 	if v, ok := uu.mutation.Password(); ok {
 		if err := user.PasswordValidator(v); err != nil {
 			return &ValidationError{Name: "password", err: fmt.Errorf(`ent: validator failed for field "User.password": %w`, err)}
@@ -252,20 +213,11 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := uu.mutation.Username(); ok {
 		_spec.SetField(user.FieldUsername, field.TypeString, value)
 	}
-	if value, ok := uu.mutation.Fullname(); ok {
-		_spec.SetField(user.FieldFullname, field.TypeString, value)
-	}
 	if value, ok := uu.mutation.Email(); ok {
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
 	}
 	if value, ok := uu.mutation.Password(); ok {
 		_spec.SetField(user.FieldPassword, field.TypeString, value)
-	}
-	if value, ok := uu.mutation.Birthday(); ok {
-		_spec.SetField(user.FieldBirthday, field.TypeTime, value)
-	}
-	if uu.mutation.BirthdayCleared() {
-		_spec.ClearField(user.FieldBirthday, field.TypeTime)
 	}
 	if value, ok := uu.mutation.CreatedAt(); ok {
 		_spec.SetField(user.FieldCreatedAt, field.TypeTime, value)
@@ -365,20 +317,6 @@ func (uuo *UserUpdateOne) SetNillableUsername(s *string) *UserUpdateOne {
 	return uuo
 }
 
-// SetFullname sets the "fullname" field.
-func (uuo *UserUpdateOne) SetFullname(s string) *UserUpdateOne {
-	uuo.mutation.SetFullname(s)
-	return uuo
-}
-
-// SetNillableFullname sets the "fullname" field if the given value is not nil.
-func (uuo *UserUpdateOne) SetNillableFullname(s *string) *UserUpdateOne {
-	if s != nil {
-		uuo.SetFullname(*s)
-	}
-	return uuo
-}
-
 // SetEmail sets the "email" field.
 func (uuo *UserUpdateOne) SetEmail(s string) *UserUpdateOne {
 	uuo.mutation.SetEmail(s)
@@ -404,26 +342,6 @@ func (uuo *UserUpdateOne) SetNillablePassword(s *string) *UserUpdateOne {
 	if s != nil {
 		uuo.SetPassword(*s)
 	}
-	return uuo
-}
-
-// SetBirthday sets the "birthday" field.
-func (uuo *UserUpdateOne) SetBirthday(t time.Time) *UserUpdateOne {
-	uuo.mutation.SetBirthday(t)
-	return uuo
-}
-
-// SetNillableBirthday sets the "birthday" field if the given value is not nil.
-func (uuo *UserUpdateOne) SetNillableBirthday(t *time.Time) *UserUpdateOne {
-	if t != nil {
-		uuo.SetBirthday(*t)
-	}
-	return uuo
-}
-
-// ClearBirthday clears the value of the "birthday" field.
-func (uuo *UserUpdateOne) ClearBirthday() *UserUpdateOne {
-	uuo.mutation.ClearBirthday()
 	return uuo
 }
 
@@ -558,11 +476,6 @@ func (uuo *UserUpdateOne) check() error {
 			return &ValidationError{Name: "username", err: fmt.Errorf(`ent: validator failed for field "User.username": %w`, err)}
 		}
 	}
-	if v, ok := uuo.mutation.Fullname(); ok {
-		if err := user.FullnameValidator(v); err != nil {
-			return &ValidationError{Name: "fullname", err: fmt.Errorf(`ent: validator failed for field "User.fullname": %w`, err)}
-		}
-	}
 	if v, ok := uuo.mutation.Password(); ok {
 		if err := user.PasswordValidator(v); err != nil {
 			return &ValidationError{Name: "password", err: fmt.Errorf(`ent: validator failed for field "User.password": %w`, err)}
@@ -603,20 +516,11 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	if value, ok := uuo.mutation.Username(); ok {
 		_spec.SetField(user.FieldUsername, field.TypeString, value)
 	}
-	if value, ok := uuo.mutation.Fullname(); ok {
-		_spec.SetField(user.FieldFullname, field.TypeString, value)
-	}
 	if value, ok := uuo.mutation.Email(); ok {
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
 	}
 	if value, ok := uuo.mutation.Password(); ok {
 		_spec.SetField(user.FieldPassword, field.TypeString, value)
-	}
-	if value, ok := uuo.mutation.Birthday(); ok {
-		_spec.SetField(user.FieldBirthday, field.TypeTime, value)
-	}
-	if uuo.mutation.BirthdayCleared() {
-		_spec.ClearField(user.FieldBirthday, field.TypeTime)
 	}
 	if value, ok := uuo.mutation.CreatedAt(); ok {
 		_spec.SetField(user.FieldCreatedAt, field.TypeTime, value)

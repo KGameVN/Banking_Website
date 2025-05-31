@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"comb.com/banking/utils"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 func JWTMiddleware(next echo.HandlerFunc) echo.HandlerFunc {

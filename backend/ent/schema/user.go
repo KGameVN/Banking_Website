@@ -17,10 +17,8 @@ type User struct {
 func (User) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("username").Unique().NotEmpty(),
-		field.String("fullname").NotEmpty(),
 		field.String("email").Unique(),
 		field.String("password").NotEmpty(),
-		field.Time("birthday").Optional(),
 		field.Time("created_at").Default(time.Now),
 		field.Time("updated_at").Default(time.Now).UpdateDefault(time.Now),
 	}

@@ -13,6 +13,7 @@ import (
 	"comb.com/banking/ent/transaction"
 	"comb.com/banking/ent/user"
 	"comb.com/banking/ent/useraccount"
+	"comb.com/banking/ent/userprofile"
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -80,6 +81,7 @@ func checkColumn(table, column string) error {
 			transaction.Table: transaction.ValidColumn,
 			user.Table:        user.ValidColumn,
 			useraccount.Table: useraccount.ValidColumn,
+			userprofile.Table: userprofile.ValidColumn,
 		})
 	})
 	return columnCheck(table, column)
