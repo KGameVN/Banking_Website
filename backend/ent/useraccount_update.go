@@ -30,16 +30,23 @@ func (uau *UserAccountUpdate) Where(ps ...predicate.UserAccount) *UserAccountUpd
 }
 
 // SetAccountNumber sets the "account_number" field.
-func (uau *UserAccountUpdate) SetAccountNumber(s string) *UserAccountUpdate {
-	uau.mutation.SetAccountNumber(s)
+func (uau *UserAccountUpdate) SetAccountNumber(i int) *UserAccountUpdate {
+	uau.mutation.ResetAccountNumber()
+	uau.mutation.SetAccountNumber(i)
 	return uau
 }
 
 // SetNillableAccountNumber sets the "account_number" field if the given value is not nil.
-func (uau *UserAccountUpdate) SetNillableAccountNumber(s *string) *UserAccountUpdate {
-	if s != nil {
-		uau.SetAccountNumber(*s)
+func (uau *UserAccountUpdate) SetNillableAccountNumber(i *int) *UserAccountUpdate {
+	if i != nil {
+		uau.SetAccountNumber(*i)
 	}
+	return uau
+}
+
+// AddAccountNumber adds i to the "account_number" field.
+func (uau *UserAccountUpdate) AddAccountNumber(i int) *UserAccountUpdate {
+	uau.mutation.AddAccountNumber(i)
 	return uau
 }
 
@@ -130,11 +137,6 @@ func (uau *UserAccountUpdate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (uau *UserAccountUpdate) check() error {
-	if v, ok := uau.mutation.AccountNumber(); ok {
-		if err := useraccount.AccountNumberValidator(v); err != nil {
-			return &ValidationError{Name: "account_number", err: fmt.Errorf(`ent: validator failed for field "UserAccount.account_number": %w`, err)}
-		}
-	}
 	if uau.mutation.UserCleared() && len(uau.mutation.UserIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "UserAccount.user"`)
 	}
@@ -154,7 +156,10 @@ func (uau *UserAccountUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 	}
 	if value, ok := uau.mutation.AccountNumber(); ok {
-		_spec.SetField(useraccount.FieldAccountNumber, field.TypeString, value)
+		_spec.SetField(useraccount.FieldAccountNumber, field.TypeInt, value)
+	}
+	if value, ok := uau.mutation.AddedAccountNumber(); ok {
+		_spec.AddField(useraccount.FieldAccountNumber, field.TypeInt, value)
 	}
 	if value, ok := uau.mutation.Balance(); ok {
 		_spec.SetField(useraccount.FieldBalance, field.TypeFloat64, value)
@@ -215,16 +220,23 @@ type UserAccountUpdateOne struct {
 }
 
 // SetAccountNumber sets the "account_number" field.
-func (uauo *UserAccountUpdateOne) SetAccountNumber(s string) *UserAccountUpdateOne {
-	uauo.mutation.SetAccountNumber(s)
+func (uauo *UserAccountUpdateOne) SetAccountNumber(i int) *UserAccountUpdateOne {
+	uauo.mutation.ResetAccountNumber()
+	uauo.mutation.SetAccountNumber(i)
 	return uauo
 }
 
 // SetNillableAccountNumber sets the "account_number" field if the given value is not nil.
-func (uauo *UserAccountUpdateOne) SetNillableAccountNumber(s *string) *UserAccountUpdateOne {
-	if s != nil {
-		uauo.SetAccountNumber(*s)
+func (uauo *UserAccountUpdateOne) SetNillableAccountNumber(i *int) *UserAccountUpdateOne {
+	if i != nil {
+		uauo.SetAccountNumber(*i)
 	}
+	return uauo
+}
+
+// AddAccountNumber adds i to the "account_number" field.
+func (uauo *UserAccountUpdateOne) AddAccountNumber(i int) *UserAccountUpdateOne {
+	uauo.mutation.AddAccountNumber(i)
 	return uauo
 }
 
@@ -328,11 +340,6 @@ func (uauo *UserAccountUpdateOne) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (uauo *UserAccountUpdateOne) check() error {
-	if v, ok := uauo.mutation.AccountNumber(); ok {
-		if err := useraccount.AccountNumberValidator(v); err != nil {
-			return &ValidationError{Name: "account_number", err: fmt.Errorf(`ent: validator failed for field "UserAccount.account_number": %w`, err)}
-		}
-	}
 	if uauo.mutation.UserCleared() && len(uauo.mutation.UserIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "UserAccount.user"`)
 	}
@@ -369,7 +376,10 @@ func (uauo *UserAccountUpdateOne) sqlSave(ctx context.Context) (_node *UserAccou
 		}
 	}
 	if value, ok := uauo.mutation.AccountNumber(); ok {
-		_spec.SetField(useraccount.FieldAccountNumber, field.TypeString, value)
+		_spec.SetField(useraccount.FieldAccountNumber, field.TypeInt, value)
+	}
+	if value, ok := uauo.mutation.AddedAccountNumber(); ok {
+		_spec.AddField(useraccount.FieldAccountNumber, field.TypeInt, value)
 	}
 	if value, ok := uauo.mutation.Balance(); ok {
 		_spec.SetField(useraccount.FieldBalance, field.TypeFloat64, value)

@@ -19,7 +19,7 @@ type UserAccount struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// AccountNumber holds the value of the "account_number" field.
-	AccountNumber string `json:"account_number,omitempty"`
+	AccountNumber int `json:"account_number,omitempty"`
 	// Balance holds the value of the "balance" field.
 	Balance float64 `json:"balance,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
@@ -58,10 +58,8 @@ func (*UserAccount) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case useraccount.FieldBalance:
 			values[i] = new(sql.NullFloat64)
-		case useraccount.FieldID:
+		case useraccount.FieldID, useraccount.FieldAccountNumber:
 			values[i] = new(sql.NullInt64)
-		case useraccount.FieldAccountNumber:
-			values[i] = new(sql.NullString)
 		case useraccount.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
 		case useraccount.ForeignKeys[0]: // user_account
@@ -88,10 +86,10 @@ func (ua *UserAccount) assignValues(columns []string, values []any) error {
 			}
 			ua.ID = int(value.Int64)
 		case useraccount.FieldAccountNumber:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field account_number", values[i])
 			} else if value.Valid {
-				ua.AccountNumber = value.String
+				ua.AccountNumber = int(value.Int64)
 			}
 		case useraccount.FieldBalance:
 			if value, ok := values[i].(*sql.NullFloat64); !ok {
@@ -154,7 +152,7 @@ func (ua *UserAccount) String() string {
 	builder.WriteString("UserAccount(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", ua.ID))
 	builder.WriteString("account_number=")
-	builder.WriteString(ua.AccountNumber)
+	builder.WriteString(fmt.Sprintf("%v", ua.AccountNumber))
 	builder.WriteString(", ")
 	builder.WriteString("balance=")
 	builder.WriteString(fmt.Sprintf("%v", ua.Balance))

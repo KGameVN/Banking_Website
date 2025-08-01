@@ -299,7 +299,7 @@ func (uaq *UserAccountQuery) WithUser(opts ...func(*UserQuery)) *UserAccountQuer
 // Example:
 //
 //	var v []struct {
-//		AccountNumber string `json:"account_number,omitempty"`
+//		AccountNumber int `json:"account_number,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -322,7 +322,7 @@ func (uaq *UserAccountQuery) GroupBy(field string, fields ...string) *UserAccoun
 // Example:
 //
 //	var v []struct {
-//		AccountNumber string `json:"account_number,omitempty"`
+//		AccountNumber int `json:"account_number,omitempty"`
 //	}
 //
 //	client.UserAccount.Query().

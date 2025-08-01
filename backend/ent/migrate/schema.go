@@ -25,8 +25,6 @@ var (
 	TransactionsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "transaction_time", Type: field.TypeTime},
-		{Name: "from", Type: field.TypeInt, SchemaType: map[string]string{"postgres": "bigint"}},
-		{Name: "to", Type: field.TypeInt, SchemaType: map[string]string{"postgres": "bigint"}},
 		{Name: "amount", Type: field.TypeInt, SchemaType: map[string]string{"postgres": "bigint"}},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
@@ -36,6 +34,22 @@ var (
 		Name:       "transactions",
 		Columns:    TransactionsColumns,
 		PrimaryKey: []*schema.Column{TransactionsColumns[0]},
+	}
+	// TransfersColumns holds the columns for the "transfers" table.
+	TransfersColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "transaction_time", Type: field.TypeTime},
+		{Name: "from", Type: field.TypeInt, SchemaType: map[string]string{"postgres": "bigint"}},
+		{Name: "to", Type: field.TypeInt, SchemaType: map[string]string{"postgres": "bigint"}},
+		{Name: "amount", Type: field.TypeInt, SchemaType: map[string]string{"postgres": "bigint"}},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+	}
+	// TransfersTable holds the schema information for the "transfers" table.
+	TransfersTable = &schema.Table{
+		Name:       "transfers",
+		Columns:    TransfersColumns,
+		PrimaryKey: []*schema.Column{TransfersColumns[0]},
 	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
@@ -64,7 +78,7 @@ var (
 	// UserAccountsColumns holds the columns for the "user_accounts" table.
 	UserAccountsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "account_number", Type: field.TypeString, Unique: true},
+		{Name: "account_number", Type: field.TypeInt, Unique: true, SchemaType: map[string]string{"postgres": "bigint"}},
 		{Name: "balance", Type: field.TypeFloat64, Default: 0},
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "user_account", Type: field.TypeInt, Unique: true},
@@ -105,6 +119,7 @@ var (
 	Tables = []*schema.Table{
 		LoginTokensTable,
 		TransactionsTable,
+		TransfersTable,
 		UsersTable,
 		UserAccountsTable,
 		UserProfilesTable,

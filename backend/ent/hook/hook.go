@@ -33,6 +33,18 @@ func (f TransactionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value,
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TransactionMutation", m)
 }
 
+// The TransferFunc type is an adapter to allow the use of ordinary
+// function as Transfer mutator.
+type TransferFunc func(context.Context, *ent.TransferMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f TransferFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.TransferMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TransferMutation", m)
+}
+
 // The UserFunc type is an adapter to allow the use of ordinary
 // function as User mutator.
 type UserFunc func(context.Context, *ent.UserMutation) (ent.Value, error)

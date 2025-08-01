@@ -42,48 +42,6 @@ func (tu *TransactionUpdate) SetNillableTransactionTime(t *time.Time) *Transacti
 	return tu
 }
 
-// SetFrom sets the "From" field.
-func (tu *TransactionUpdate) SetFrom(i int) *TransactionUpdate {
-	tu.mutation.ResetFrom()
-	tu.mutation.SetFrom(i)
-	return tu
-}
-
-// SetNillableFrom sets the "From" field if the given value is not nil.
-func (tu *TransactionUpdate) SetNillableFrom(i *int) *TransactionUpdate {
-	if i != nil {
-		tu.SetFrom(*i)
-	}
-	return tu
-}
-
-// AddFrom adds i to the "From" field.
-func (tu *TransactionUpdate) AddFrom(i int) *TransactionUpdate {
-	tu.mutation.AddFrom(i)
-	return tu
-}
-
-// SetTo sets the "To" field.
-func (tu *TransactionUpdate) SetTo(i int) *TransactionUpdate {
-	tu.mutation.ResetTo()
-	tu.mutation.SetTo(i)
-	return tu
-}
-
-// SetNillableTo sets the "To" field if the given value is not nil.
-func (tu *TransactionUpdate) SetNillableTo(i *int) *TransactionUpdate {
-	if i != nil {
-		tu.SetTo(*i)
-	}
-	return tu
-}
-
-// AddTo adds i to the "To" field.
-func (tu *TransactionUpdate) AddTo(i int) *TransactionUpdate {
-	tu.mutation.AddTo(i)
-	return tu
-}
-
 // SetAmount sets the "Amount" field.
 func (tu *TransactionUpdate) SetAmount(i int) *TransactionUpdate {
 	tu.mutation.ResetAmount()
@@ -178,18 +136,6 @@ func (tu *TransactionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := tu.mutation.TransactionTime(); ok {
 		_spec.SetField(transaction.FieldTransactionTime, field.TypeTime, value)
 	}
-	if value, ok := tu.mutation.From(); ok {
-		_spec.SetField(transaction.FieldFrom, field.TypeInt, value)
-	}
-	if value, ok := tu.mutation.AddedFrom(); ok {
-		_spec.AddField(transaction.FieldFrom, field.TypeInt, value)
-	}
-	if value, ok := tu.mutation.To(); ok {
-		_spec.SetField(transaction.FieldTo, field.TypeInt, value)
-	}
-	if value, ok := tu.mutation.AddedTo(); ok {
-		_spec.AddField(transaction.FieldTo, field.TypeInt, value)
-	}
 	if value, ok := tu.mutation.Amount(); ok {
 		_spec.SetField(transaction.FieldAmount, field.TypeInt, value)
 	}
@@ -233,48 +179,6 @@ func (tuo *TransactionUpdateOne) SetNillableTransactionTime(t *time.Time) *Trans
 	if t != nil {
 		tuo.SetTransactionTime(*t)
 	}
-	return tuo
-}
-
-// SetFrom sets the "From" field.
-func (tuo *TransactionUpdateOne) SetFrom(i int) *TransactionUpdateOne {
-	tuo.mutation.ResetFrom()
-	tuo.mutation.SetFrom(i)
-	return tuo
-}
-
-// SetNillableFrom sets the "From" field if the given value is not nil.
-func (tuo *TransactionUpdateOne) SetNillableFrom(i *int) *TransactionUpdateOne {
-	if i != nil {
-		tuo.SetFrom(*i)
-	}
-	return tuo
-}
-
-// AddFrom adds i to the "From" field.
-func (tuo *TransactionUpdateOne) AddFrom(i int) *TransactionUpdateOne {
-	tuo.mutation.AddFrom(i)
-	return tuo
-}
-
-// SetTo sets the "To" field.
-func (tuo *TransactionUpdateOne) SetTo(i int) *TransactionUpdateOne {
-	tuo.mutation.ResetTo()
-	tuo.mutation.SetTo(i)
-	return tuo
-}
-
-// SetNillableTo sets the "To" field if the given value is not nil.
-func (tuo *TransactionUpdateOne) SetNillableTo(i *int) *TransactionUpdateOne {
-	if i != nil {
-		tuo.SetTo(*i)
-	}
-	return tuo
-}
-
-// AddTo adds i to the "To" field.
-func (tuo *TransactionUpdateOne) AddTo(i int) *TransactionUpdateOne {
-	tuo.mutation.AddTo(i)
 	return tuo
 }
 
@@ -401,18 +305,6 @@ func (tuo *TransactionUpdateOne) sqlSave(ctx context.Context) (_node *Transactio
 	}
 	if value, ok := tuo.mutation.TransactionTime(); ok {
 		_spec.SetField(transaction.FieldTransactionTime, field.TypeTime, value)
-	}
-	if value, ok := tuo.mutation.From(); ok {
-		_spec.SetField(transaction.FieldFrom, field.TypeInt, value)
-	}
-	if value, ok := tuo.mutation.AddedFrom(); ok {
-		_spec.AddField(transaction.FieldFrom, field.TypeInt, value)
-	}
-	if value, ok := tuo.mutation.To(); ok {
-		_spec.SetField(transaction.FieldTo, field.TypeInt, value)
-	}
-	if value, ok := tuo.mutation.AddedTo(); ok {
-		_spec.AddField(transaction.FieldTo, field.TypeInt, value)
 	}
 	if value, ok := tuo.mutation.Amount(); ok {
 		_spec.SetField(transaction.FieldAmount, field.TypeInt, value)

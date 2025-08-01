@@ -8,6 +8,7 @@ import (
 	"comb.com/banking/ent/logintoken"
 	"comb.com/banking/ent/schema"
 	"comb.com/banking/ent/transaction"
+	"comb.com/banking/ent/transfer"
 	"comb.com/banking/ent/user"
 	"comb.com/banking/ent/useraccount"
 	"comb.com/banking/ent/userprofile"
@@ -34,15 +35,31 @@ func init() {
 	// transaction.DefaultTransactionTime holds the default value on creation for the TransactionTime field.
 	transaction.DefaultTransactionTime = transactionDescTransactionTime.Default.(func() time.Time)
 	// transactionDescCreatedAt is the schema descriptor for created_at field.
-	transactionDescCreatedAt := transactionFields[4].Descriptor()
+	transactionDescCreatedAt := transactionFields[2].Descriptor()
 	// transaction.DefaultCreatedAt holds the default value on creation for the created_at field.
 	transaction.DefaultCreatedAt = transactionDescCreatedAt.Default.(func() time.Time)
 	// transactionDescUpdatedAt is the schema descriptor for updated_at field.
-	transactionDescUpdatedAt := transactionFields[5].Descriptor()
+	transactionDescUpdatedAt := transactionFields[3].Descriptor()
 	// transaction.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	transaction.DefaultUpdatedAt = transactionDescUpdatedAt.Default.(func() time.Time)
 	// transaction.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	transaction.UpdateDefaultUpdatedAt = transactionDescUpdatedAt.UpdateDefault.(func() time.Time)
+	transferFields := schema.Transfer{}.Fields()
+	_ = transferFields
+	// transferDescTransactionTime is the schema descriptor for TransactionTime field.
+	transferDescTransactionTime := transferFields[0].Descriptor()
+	// transfer.DefaultTransactionTime holds the default value on creation for the TransactionTime field.
+	transfer.DefaultTransactionTime = transferDescTransactionTime.Default.(func() time.Time)
+	// transferDescCreatedAt is the schema descriptor for created_at field.
+	transferDescCreatedAt := transferFields[4].Descriptor()
+	// transfer.DefaultCreatedAt holds the default value on creation for the created_at field.
+	transfer.DefaultCreatedAt = transferDescCreatedAt.Default.(func() time.Time)
+	// transferDescUpdatedAt is the schema descriptor for updated_at field.
+	transferDescUpdatedAt := transferFields[5].Descriptor()
+	// transfer.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	transfer.DefaultUpdatedAt = transferDescUpdatedAt.Default.(func() time.Time)
+	// transfer.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	transfer.UpdateDefaultUpdatedAt = transferDescUpdatedAt.UpdateDefault.(func() time.Time)
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescUsername is the schema descriptor for username field.
@@ -65,10 +82,6 @@ func init() {
 	user.UpdateDefaultUpdatedAt = userDescUpdatedAt.UpdateDefault.(func() time.Time)
 	useraccountFields := schema.UserAccount{}.Fields()
 	_ = useraccountFields
-	// useraccountDescAccountNumber is the schema descriptor for account_number field.
-	useraccountDescAccountNumber := useraccountFields[0].Descriptor()
-	// useraccount.AccountNumberValidator is a validator for the "account_number" field. It is called by the builders before save.
-	useraccount.AccountNumberValidator = useraccountDescAccountNumber.Validators[0].(func(string) error)
 	// useraccountDescBalance is the schema descriptor for balance field.
 	useraccountDescBalance := useraccountFields[1].Descriptor()
 	// useraccount.DefaultBalance holds the default value on creation for the balance field.
