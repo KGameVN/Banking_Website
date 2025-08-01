@@ -12,6 +12,7 @@ import (
 	"comb.com/banking/ent/logintoken"
 	"comb.com/banking/ent/predicate"
 	"comb.com/banking/ent/transaction"
+	"comb.com/banking/ent/transfer"
 	"comb.com/banking/ent/user"
 	"comb.com/banking/ent/useraccount"
 	"comb.com/banking/ent/userprofile"
@@ -30,6 +31,7 @@ const (
 	// Node types.
 	TypeLoginToken  = "LoginToken"
 	TypeTransaction = "Transaction"
+	TypeTransfer    = "Transfer"
 	TypeUser        = "User"
 	TypeUserAccount = "UserAccount"
 	TypeUserProfile = "UserProfile"
@@ -565,10 +567,6 @@ type TransactionMutation struct {
 	typ              string
 	id               *int
 	_TransactionTime *time.Time
-	_From            *int
-	add_From         *int
-	_To              *int
-	add_To           *int
 	_Amount          *int
 	add_Amount       *int
 	created_at       *time.Time
@@ -711,118 +709,6 @@ func (m *TransactionMutation) OldTransactionTime(ctx context.Context) (v time.Ti
 // ResetTransactionTime resets all changes to the "TransactionTime" field.
 func (m *TransactionMutation) ResetTransactionTime() {
 	m._TransactionTime = nil
-}
-
-// SetFrom sets the "From" field.
-func (m *TransactionMutation) SetFrom(i int) {
-	m._From = &i
-	m.add_From = nil
-}
-
-// From returns the value of the "From" field in the mutation.
-func (m *TransactionMutation) From() (r int, exists bool) {
-	v := m._From
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldFrom returns the old "From" field's value of the Transaction entity.
-// If the Transaction object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TransactionMutation) OldFrom(ctx context.Context) (v int, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldFrom is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldFrom requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldFrom: %w", err)
-	}
-	return oldValue.From, nil
-}
-
-// AddFrom adds i to the "From" field.
-func (m *TransactionMutation) AddFrom(i int) {
-	if m.add_From != nil {
-		*m.add_From += i
-	} else {
-		m.add_From = &i
-	}
-}
-
-// AddedFrom returns the value that was added to the "From" field in this mutation.
-func (m *TransactionMutation) AddedFrom() (r int, exists bool) {
-	v := m.add_From
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// ResetFrom resets all changes to the "From" field.
-func (m *TransactionMutation) ResetFrom() {
-	m._From = nil
-	m.add_From = nil
-}
-
-// SetTo sets the "To" field.
-func (m *TransactionMutation) SetTo(i int) {
-	m._To = &i
-	m.add_To = nil
-}
-
-// To returns the value of the "To" field in the mutation.
-func (m *TransactionMutation) To() (r int, exists bool) {
-	v := m._To
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldTo returns the old "To" field's value of the Transaction entity.
-// If the Transaction object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TransactionMutation) OldTo(ctx context.Context) (v int, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldTo is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldTo requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldTo: %w", err)
-	}
-	return oldValue.To, nil
-}
-
-// AddTo adds i to the "To" field.
-func (m *TransactionMutation) AddTo(i int) {
-	if m.add_To != nil {
-		*m.add_To += i
-	} else {
-		m.add_To = &i
-	}
-}
-
-// AddedTo returns the value that was added to the "To" field in this mutation.
-func (m *TransactionMutation) AddedTo() (r int, exists bool) {
-	v := m.add_To
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// ResetTo resets all changes to the "To" field.
-func (m *TransactionMutation) ResetTo() {
-	m._To = nil
-	m.add_To = nil
 }
 
 // SetAmount sets the "Amount" field.
@@ -987,15 +873,9 @@ func (m *TransactionMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TransactionMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 4)
 	if m._TransactionTime != nil {
 		fields = append(fields, transaction.FieldTransactionTime)
-	}
-	if m._From != nil {
-		fields = append(fields, transaction.FieldFrom)
-	}
-	if m._To != nil {
-		fields = append(fields, transaction.FieldTo)
 	}
 	if m._Amount != nil {
 		fields = append(fields, transaction.FieldAmount)
@@ -1016,10 +896,6 @@ func (m *TransactionMutation) Field(name string) (ent.Value, bool) {
 	switch name {
 	case transaction.FieldTransactionTime:
 		return m.TransactionTime()
-	case transaction.FieldFrom:
-		return m.From()
-	case transaction.FieldTo:
-		return m.To()
 	case transaction.FieldAmount:
 		return m.Amount()
 	case transaction.FieldCreatedAt:
@@ -1037,10 +913,6 @@ func (m *TransactionMutation) OldField(ctx context.Context, name string) (ent.Va
 	switch name {
 	case transaction.FieldTransactionTime:
 		return m.OldTransactionTime(ctx)
-	case transaction.FieldFrom:
-		return m.OldFrom(ctx)
-	case transaction.FieldTo:
-		return m.OldTo(ctx)
 	case transaction.FieldAmount:
 		return m.OldAmount(ctx)
 	case transaction.FieldCreatedAt:
@@ -1062,20 +934,6 @@ func (m *TransactionMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetTransactionTime(v)
-		return nil
-	case transaction.FieldFrom:
-		v, ok := value.(int)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetFrom(v)
-		return nil
-	case transaction.FieldTo:
-		v, ok := value.(int)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetTo(v)
 		return nil
 	case transaction.FieldAmount:
 		v, ok := value.(int)
@@ -1106,12 +964,6 @@ func (m *TransactionMutation) SetField(name string, value ent.Value) error {
 // this mutation.
 func (m *TransactionMutation) AddedFields() []string {
 	var fields []string
-	if m.add_From != nil {
-		fields = append(fields, transaction.FieldFrom)
-	}
-	if m.add_To != nil {
-		fields = append(fields, transaction.FieldTo)
-	}
 	if m.add_Amount != nil {
 		fields = append(fields, transaction.FieldAmount)
 	}
@@ -1123,10 +975,6 @@ func (m *TransactionMutation) AddedFields() []string {
 // was not set, or was not defined in the schema.
 func (m *TransactionMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
-	case transaction.FieldFrom:
-		return m.AddedFrom()
-	case transaction.FieldTo:
-		return m.AddedTo()
 	case transaction.FieldAmount:
 		return m.AddedAmount()
 	}
@@ -1138,20 +986,6 @@ func (m *TransactionMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *TransactionMutation) AddField(name string, value ent.Value) error {
 	switch name {
-	case transaction.FieldFrom:
-		v, ok := value.(int)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.AddFrom(v)
-		return nil
-	case transaction.FieldTo:
-		v, ok := value.(int)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.AddTo(v)
-		return nil
 	case transaction.FieldAmount:
 		v, ok := value.(int)
 		if !ok {
@@ -1188,12 +1022,6 @@ func (m *TransactionMutation) ResetField(name string) error {
 	switch name {
 	case transaction.FieldTransactionTime:
 		m.ResetTransactionTime()
-		return nil
-	case transaction.FieldFrom:
-		m.ResetFrom()
-		return nil
-	case transaction.FieldTo:
-		m.ResetTo()
 		return nil
 	case transaction.FieldAmount:
 		m.ResetAmount()
@@ -1254,6 +1082,704 @@ func (m *TransactionMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *TransactionMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown Transaction edge %s", name)
+}
+
+// TransferMutation represents an operation that mutates the Transfer nodes in the graph.
+type TransferMutation struct {
+	config
+	op               Op
+	typ              string
+	id               *int
+	_TransactionTime *time.Time
+	_From            *int
+	add_From         *int
+	_To              *int
+	add_To           *int
+	_Amount          *int
+	add_Amount       *int
+	created_at       *time.Time
+	updated_at       *time.Time
+	clearedFields    map[string]struct{}
+	done             bool
+	oldValue         func(context.Context) (*Transfer, error)
+	predicates       []predicate.Transfer
+}
+
+var _ ent.Mutation = (*TransferMutation)(nil)
+
+// transferOption allows management of the mutation configuration using functional options.
+type transferOption func(*TransferMutation)
+
+// newTransferMutation creates new mutation for the Transfer entity.
+func newTransferMutation(c config, op Op, opts ...transferOption) *TransferMutation {
+	m := &TransferMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeTransfer,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withTransferID sets the ID field of the mutation.
+func withTransferID(id int) transferOption {
+	return func(m *TransferMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Transfer
+		)
+		m.oldValue = func(ctx context.Context) (*Transfer, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Transfer.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withTransfer sets the old Transfer of the mutation.
+func withTransfer(node *Transfer) transferOption {
+	return func(m *TransferMutation) {
+		m.oldValue = func(context.Context) (*Transfer, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m TransferMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m TransferMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *TransferMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *TransferMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Transfer.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetTransactionTime sets the "TransactionTime" field.
+func (m *TransferMutation) SetTransactionTime(t time.Time) {
+	m._TransactionTime = &t
+}
+
+// TransactionTime returns the value of the "TransactionTime" field in the mutation.
+func (m *TransferMutation) TransactionTime() (r time.Time, exists bool) {
+	v := m._TransactionTime
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTransactionTime returns the old "TransactionTime" field's value of the Transfer entity.
+// If the Transfer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TransferMutation) OldTransactionTime(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTransactionTime is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTransactionTime requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTransactionTime: %w", err)
+	}
+	return oldValue.TransactionTime, nil
+}
+
+// ResetTransactionTime resets all changes to the "TransactionTime" field.
+func (m *TransferMutation) ResetTransactionTime() {
+	m._TransactionTime = nil
+}
+
+// SetFrom sets the "From" field.
+func (m *TransferMutation) SetFrom(i int) {
+	m._From = &i
+	m.add_From = nil
+}
+
+// From returns the value of the "From" field in the mutation.
+func (m *TransferMutation) From() (r int, exists bool) {
+	v := m._From
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFrom returns the old "From" field's value of the Transfer entity.
+// If the Transfer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TransferMutation) OldFrom(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldFrom is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldFrom requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFrom: %w", err)
+	}
+	return oldValue.From, nil
+}
+
+// AddFrom adds i to the "From" field.
+func (m *TransferMutation) AddFrom(i int) {
+	if m.add_From != nil {
+		*m.add_From += i
+	} else {
+		m.add_From = &i
+	}
+}
+
+// AddedFrom returns the value that was added to the "From" field in this mutation.
+func (m *TransferMutation) AddedFrom() (r int, exists bool) {
+	v := m.add_From
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetFrom resets all changes to the "From" field.
+func (m *TransferMutation) ResetFrom() {
+	m._From = nil
+	m.add_From = nil
+}
+
+// SetTo sets the "To" field.
+func (m *TransferMutation) SetTo(i int) {
+	m._To = &i
+	m.add_To = nil
+}
+
+// To returns the value of the "To" field in the mutation.
+func (m *TransferMutation) To() (r int, exists bool) {
+	v := m._To
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTo returns the old "To" field's value of the Transfer entity.
+// If the Transfer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TransferMutation) OldTo(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTo is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTo requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTo: %w", err)
+	}
+	return oldValue.To, nil
+}
+
+// AddTo adds i to the "To" field.
+func (m *TransferMutation) AddTo(i int) {
+	if m.add_To != nil {
+		*m.add_To += i
+	} else {
+		m.add_To = &i
+	}
+}
+
+// AddedTo returns the value that was added to the "To" field in this mutation.
+func (m *TransferMutation) AddedTo() (r int, exists bool) {
+	v := m.add_To
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetTo resets all changes to the "To" field.
+func (m *TransferMutation) ResetTo() {
+	m._To = nil
+	m.add_To = nil
+}
+
+// SetAmount sets the "Amount" field.
+func (m *TransferMutation) SetAmount(i int) {
+	m._Amount = &i
+	m.add_Amount = nil
+}
+
+// Amount returns the value of the "Amount" field in the mutation.
+func (m *TransferMutation) Amount() (r int, exists bool) {
+	v := m._Amount
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAmount returns the old "Amount" field's value of the Transfer entity.
+// If the Transfer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TransferMutation) OldAmount(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldAmount is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldAmount requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAmount: %w", err)
+	}
+	return oldValue.Amount, nil
+}
+
+// AddAmount adds i to the "Amount" field.
+func (m *TransferMutation) AddAmount(i int) {
+	if m.add_Amount != nil {
+		*m.add_Amount += i
+	} else {
+		m.add_Amount = &i
+	}
+}
+
+// AddedAmount returns the value that was added to the "Amount" field in this mutation.
+func (m *TransferMutation) AddedAmount() (r int, exists bool) {
+	v := m.add_Amount
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetAmount resets all changes to the "Amount" field.
+func (m *TransferMutation) ResetAmount() {
+	m._Amount = nil
+	m.add_Amount = nil
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *TransferMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *TransferMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the Transfer entity.
+// If the Transfer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TransferMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *TransferMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *TransferMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *TransferMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the Transfer entity.
+// If the Transfer object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TransferMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *TransferMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// Where appends a list predicates to the TransferMutation builder.
+func (m *TransferMutation) Where(ps ...predicate.Transfer) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the TransferMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *TransferMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Transfer, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *TransferMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *TransferMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Transfer).
+func (m *TransferMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *TransferMutation) Fields() []string {
+	fields := make([]string, 0, 6)
+	if m._TransactionTime != nil {
+		fields = append(fields, transfer.FieldTransactionTime)
+	}
+	if m._From != nil {
+		fields = append(fields, transfer.FieldFrom)
+	}
+	if m._To != nil {
+		fields = append(fields, transfer.FieldTo)
+	}
+	if m._Amount != nil {
+		fields = append(fields, transfer.FieldAmount)
+	}
+	if m.created_at != nil {
+		fields = append(fields, transfer.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, transfer.FieldUpdatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *TransferMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case transfer.FieldTransactionTime:
+		return m.TransactionTime()
+	case transfer.FieldFrom:
+		return m.From()
+	case transfer.FieldTo:
+		return m.To()
+	case transfer.FieldAmount:
+		return m.Amount()
+	case transfer.FieldCreatedAt:
+		return m.CreatedAt()
+	case transfer.FieldUpdatedAt:
+		return m.UpdatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *TransferMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case transfer.FieldTransactionTime:
+		return m.OldTransactionTime(ctx)
+	case transfer.FieldFrom:
+		return m.OldFrom(ctx)
+	case transfer.FieldTo:
+		return m.OldTo(ctx)
+	case transfer.FieldAmount:
+		return m.OldAmount(ctx)
+	case transfer.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case transfer.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown Transfer field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TransferMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case transfer.FieldTransactionTime:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTransactionTime(v)
+		return nil
+	case transfer.FieldFrom:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFrom(v)
+		return nil
+	case transfer.FieldTo:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTo(v)
+		return nil
+	case transfer.FieldAmount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAmount(v)
+		return nil
+	case transfer.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case transfer.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Transfer field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *TransferMutation) AddedFields() []string {
+	var fields []string
+	if m.add_From != nil {
+		fields = append(fields, transfer.FieldFrom)
+	}
+	if m.add_To != nil {
+		fields = append(fields, transfer.FieldTo)
+	}
+	if m.add_Amount != nil {
+		fields = append(fields, transfer.FieldAmount)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *TransferMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case transfer.FieldFrom:
+		return m.AddedFrom()
+	case transfer.FieldTo:
+		return m.AddedTo()
+	case transfer.FieldAmount:
+		return m.AddedAmount()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TransferMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case transfer.FieldFrom:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddFrom(v)
+		return nil
+	case transfer.FieldTo:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddTo(v)
+		return nil
+	case transfer.FieldAmount:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddAmount(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Transfer numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *TransferMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *TransferMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *TransferMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown Transfer nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *TransferMutation) ResetField(name string) error {
+	switch name {
+	case transfer.FieldTransactionTime:
+		m.ResetTransactionTime()
+		return nil
+	case transfer.FieldFrom:
+		m.ResetFrom()
+		return nil
+	case transfer.FieldTo:
+		m.ResetTo()
+		return nil
+	case transfer.FieldAmount:
+		m.ResetAmount()
+		return nil
+	case transfer.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case transfer.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown Transfer field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *TransferMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *TransferMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *TransferMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *TransferMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *TransferMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *TransferMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *TransferMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Transfer unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *TransferMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Transfer edge %s", name)
 }
 
 // UserMutation represents an operation that mutates the User nodes in the graph.
@@ -1927,19 +2453,20 @@ func (m *UserMutation) ResetEdge(name string) error {
 // UserAccountMutation represents an operation that mutates the UserAccount nodes in the graph.
 type UserAccountMutation struct {
 	config
-	op             Op
-	typ            string
-	id             *int
-	account_number *string
-	balance        *float64
-	addbalance     *float64
-	updated_at     *time.Time
-	clearedFields  map[string]struct{}
-	user           *int
-	cleareduser    bool
-	done           bool
-	oldValue       func(context.Context) (*UserAccount, error)
-	predicates     []predicate.UserAccount
+	op                Op
+	typ               string
+	id                *int
+	account_number    *int
+	addaccount_number *int
+	balance           *float64
+	addbalance        *float64
+	updated_at        *time.Time
+	clearedFields     map[string]struct{}
+	user              *int
+	cleareduser       bool
+	done              bool
+	oldValue          func(context.Context) (*UserAccount, error)
+	predicates        []predicate.UserAccount
 }
 
 var _ ent.Mutation = (*UserAccountMutation)(nil)
@@ -2041,12 +2568,13 @@ func (m *UserAccountMutation) IDs(ctx context.Context) ([]int, error) {
 }
 
 // SetAccountNumber sets the "account_number" field.
-func (m *UserAccountMutation) SetAccountNumber(s string) {
-	m.account_number = &s
+func (m *UserAccountMutation) SetAccountNumber(i int) {
+	m.account_number = &i
+	m.addaccount_number = nil
 }
 
 // AccountNumber returns the value of the "account_number" field in the mutation.
-func (m *UserAccountMutation) AccountNumber() (r string, exists bool) {
+func (m *UserAccountMutation) AccountNumber() (r int, exists bool) {
 	v := m.account_number
 	if v == nil {
 		return
@@ -2057,7 +2585,7 @@ func (m *UserAccountMutation) AccountNumber() (r string, exists bool) {
 // OldAccountNumber returns the old "account_number" field's value of the UserAccount entity.
 // If the UserAccount object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *UserAccountMutation) OldAccountNumber(ctx context.Context) (v string, err error) {
+func (m *UserAccountMutation) OldAccountNumber(ctx context.Context) (v int, err error) {
 	if !m.op.Is(OpUpdateOne) {
 		return v, errors.New("OldAccountNumber is only allowed on UpdateOne operations")
 	}
@@ -2071,9 +2599,28 @@ func (m *UserAccountMutation) OldAccountNumber(ctx context.Context) (v string, e
 	return oldValue.AccountNumber, nil
 }
 
+// AddAccountNumber adds i to the "account_number" field.
+func (m *UserAccountMutation) AddAccountNumber(i int) {
+	if m.addaccount_number != nil {
+		*m.addaccount_number += i
+	} else {
+		m.addaccount_number = &i
+	}
+}
+
+// AddedAccountNumber returns the value that was added to the "account_number" field in this mutation.
+func (m *UserAccountMutation) AddedAccountNumber() (r int, exists bool) {
+	v := m.addaccount_number
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
 // ResetAccountNumber resets all changes to the "account_number" field.
 func (m *UserAccountMutation) ResetAccountNumber() {
 	m.account_number = nil
+	m.addaccount_number = nil
 }
 
 // SetBalance sets the "balance" field.
@@ -2290,7 +2837,7 @@ func (m *UserAccountMutation) OldField(ctx context.Context, name string) (ent.Va
 func (m *UserAccountMutation) SetField(name string, value ent.Value) error {
 	switch name {
 	case useraccount.FieldAccountNumber:
-		v, ok := value.(string)
+		v, ok := value.(int)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
@@ -2318,6 +2865,9 @@ func (m *UserAccountMutation) SetField(name string, value ent.Value) error {
 // this mutation.
 func (m *UserAccountMutation) AddedFields() []string {
 	var fields []string
+	if m.addaccount_number != nil {
+		fields = append(fields, useraccount.FieldAccountNumber)
+	}
 	if m.addbalance != nil {
 		fields = append(fields, useraccount.FieldBalance)
 	}
@@ -2329,6 +2879,8 @@ func (m *UserAccountMutation) AddedFields() []string {
 // was not set, or was not defined in the schema.
 func (m *UserAccountMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
+	case useraccount.FieldAccountNumber:
+		return m.AddedAccountNumber()
 	case useraccount.FieldBalance:
 		return m.AddedBalance()
 	}
@@ -2340,6 +2892,13 @@ func (m *UserAccountMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *UserAccountMutation) AddField(name string, value ent.Value) error {
 	switch name {
+	case useraccount.FieldAccountNumber:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddAccountNumber(v)
+		return nil
 	case useraccount.FieldBalance:
 		v, ok := value.(float64)
 		if !ok {

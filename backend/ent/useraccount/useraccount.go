@@ -63,8 +63,6 @@ func ValidColumn(column string) bool {
 }
 
 var (
-	// AccountNumberValidator is a validator for the "account_number" field. It is called by the builders before save.
-	AccountNumberValidator func(string) error
 	// DefaultBalance holds the default value on creation for the "balance" field.
 	DefaultBalance float64
 	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.

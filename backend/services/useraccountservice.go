@@ -71,7 +71,7 @@ func (s Service) Transfer(c echo.Context) error {
 	userID := c.Get("userID").(int)
 
 	type Request struct {
-		ToAccountNumber string  `json:"to_account_number"`
+		ToAccountNumber float64 `json:"to_account_number"`
 		Amount          float64 `json:"amount"`
 	}
 	var req Request
@@ -106,7 +106,7 @@ func (s Service) Transfer(c echo.Context) error {
 	// Tài khoản nhận
 	toAcc, err := tx.UserAccount.
 		Query().
-		Where(useraccount.AccountNumberEQ(req.ToAccountNumber)).
+		Where(useraccount.AccountNumberEQ(int(req.ToAccountNumber))).
 		Only(ctx)
 	if err != nil {
 		_ = tx.Rollback()

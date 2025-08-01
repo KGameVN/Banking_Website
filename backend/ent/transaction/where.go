@@ -59,16 +59,6 @@ func TransactionTime(v time.Time) predicate.Transaction {
 	return predicate.Transaction(sql.FieldEQ(FieldTransactionTime, v))
 }
 
-// From applies equality check predicate on the "From" field. It's identical to FromEQ.
-func From(v int) predicate.Transaction {
-	return predicate.Transaction(sql.FieldEQ(FieldFrom, v))
-}
-
-// To applies equality check predicate on the "To" field. It's identical to ToEQ.
-func To(v int) predicate.Transaction {
-	return predicate.Transaction(sql.FieldEQ(FieldTo, v))
-}
-
 // Amount applies equality check predicate on the "Amount" field. It's identical to AmountEQ.
 func Amount(v int) predicate.Transaction {
 	return predicate.Transaction(sql.FieldEQ(FieldAmount, v))
@@ -122,86 +112,6 @@ func TransactionTimeLT(v time.Time) predicate.Transaction {
 // TransactionTimeLTE applies the LTE predicate on the "TransactionTime" field.
 func TransactionTimeLTE(v time.Time) predicate.Transaction {
 	return predicate.Transaction(sql.FieldLTE(FieldTransactionTime, v))
-}
-
-// FromEQ applies the EQ predicate on the "From" field.
-func FromEQ(v int) predicate.Transaction {
-	return predicate.Transaction(sql.FieldEQ(FieldFrom, v))
-}
-
-// FromNEQ applies the NEQ predicate on the "From" field.
-func FromNEQ(v int) predicate.Transaction {
-	return predicate.Transaction(sql.FieldNEQ(FieldFrom, v))
-}
-
-// FromIn applies the In predicate on the "From" field.
-func FromIn(vs ...int) predicate.Transaction {
-	return predicate.Transaction(sql.FieldIn(FieldFrom, vs...))
-}
-
-// FromNotIn applies the NotIn predicate on the "From" field.
-func FromNotIn(vs ...int) predicate.Transaction {
-	return predicate.Transaction(sql.FieldNotIn(FieldFrom, vs...))
-}
-
-// FromGT applies the GT predicate on the "From" field.
-func FromGT(v int) predicate.Transaction {
-	return predicate.Transaction(sql.FieldGT(FieldFrom, v))
-}
-
-// FromGTE applies the GTE predicate on the "From" field.
-func FromGTE(v int) predicate.Transaction {
-	return predicate.Transaction(sql.FieldGTE(FieldFrom, v))
-}
-
-// FromLT applies the LT predicate on the "From" field.
-func FromLT(v int) predicate.Transaction {
-	return predicate.Transaction(sql.FieldLT(FieldFrom, v))
-}
-
-// FromLTE applies the LTE predicate on the "From" field.
-func FromLTE(v int) predicate.Transaction {
-	return predicate.Transaction(sql.FieldLTE(FieldFrom, v))
-}
-
-// ToEQ applies the EQ predicate on the "To" field.
-func ToEQ(v int) predicate.Transaction {
-	return predicate.Transaction(sql.FieldEQ(FieldTo, v))
-}
-
-// ToNEQ applies the NEQ predicate on the "To" field.
-func ToNEQ(v int) predicate.Transaction {
-	return predicate.Transaction(sql.FieldNEQ(FieldTo, v))
-}
-
-// ToIn applies the In predicate on the "To" field.
-func ToIn(vs ...int) predicate.Transaction {
-	return predicate.Transaction(sql.FieldIn(FieldTo, vs...))
-}
-
-// ToNotIn applies the NotIn predicate on the "To" field.
-func ToNotIn(vs ...int) predicate.Transaction {
-	return predicate.Transaction(sql.FieldNotIn(FieldTo, vs...))
-}
-
-// ToGT applies the GT predicate on the "To" field.
-func ToGT(v int) predicate.Transaction {
-	return predicate.Transaction(sql.FieldGT(FieldTo, v))
-}
-
-// ToGTE applies the GTE predicate on the "To" field.
-func ToGTE(v int) predicate.Transaction {
-	return predicate.Transaction(sql.FieldGTE(FieldTo, v))
-}
-
-// ToLT applies the LT predicate on the "To" field.
-func ToLT(v int) predicate.Transaction {
-	return predicate.Transaction(sql.FieldLT(FieldTo, v))
-}
-
-// ToLTE applies the LTE predicate on the "To" field.
-func ToLTE(v int) predicate.Transaction {
-	return predicate.Transaction(sql.FieldLTE(FieldTo, v))
 }
 
 // AmountEQ applies the EQ predicate on the "Amount" field.

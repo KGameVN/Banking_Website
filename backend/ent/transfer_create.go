@@ -8,46 +8,58 @@ import (
 	"fmt"
 	"time"
 
-	"comb.com/banking/ent/transaction"
+	"comb.com/banking/ent/transfer"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 )
 
-// TransactionCreate is the builder for creating a Transaction entity.
-type TransactionCreate struct {
+// TransferCreate is the builder for creating a Transfer entity.
+type TransferCreate struct {
 	config
-	mutation *TransactionMutation
+	mutation *TransferMutation
 	hooks    []Hook
 }
 
 // SetTransactionTime sets the "TransactionTime" field.
-func (tc *TransactionCreate) SetTransactionTime(t time.Time) *TransactionCreate {
+func (tc *TransferCreate) SetTransactionTime(t time.Time) *TransferCreate {
 	tc.mutation.SetTransactionTime(t)
 	return tc
 }
 
 // SetNillableTransactionTime sets the "TransactionTime" field if the given value is not nil.
-func (tc *TransactionCreate) SetNillableTransactionTime(t *time.Time) *TransactionCreate {
+func (tc *TransferCreate) SetNillableTransactionTime(t *time.Time) *TransferCreate {
 	if t != nil {
 		tc.SetTransactionTime(*t)
 	}
 	return tc
 }
 
+// SetFrom sets the "From" field.
+func (tc *TransferCreate) SetFrom(i int) *TransferCreate {
+	tc.mutation.SetFrom(i)
+	return tc
+}
+
+// SetTo sets the "To" field.
+func (tc *TransferCreate) SetTo(i int) *TransferCreate {
+	tc.mutation.SetTo(i)
+	return tc
+}
+
 // SetAmount sets the "Amount" field.
-func (tc *TransactionCreate) SetAmount(i int) *TransactionCreate {
+func (tc *TransferCreate) SetAmount(i int) *TransferCreate {
 	tc.mutation.SetAmount(i)
 	return tc
 }
 
 // SetCreatedAt sets the "created_at" field.
-func (tc *TransactionCreate) SetCreatedAt(t time.Time) *TransactionCreate {
+func (tc *TransferCreate) SetCreatedAt(t time.Time) *TransferCreate {
 	tc.mutation.SetCreatedAt(t)
 	return tc
 }
 
 // SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (tc *TransactionCreate) SetNillableCreatedAt(t *time.Time) *TransactionCreate {
+func (tc *TransferCreate) SetNillableCreatedAt(t *time.Time) *TransferCreate {
 	if t != nil {
 		tc.SetCreatedAt(*t)
 	}
@@ -55,32 +67,32 @@ func (tc *TransactionCreate) SetNillableCreatedAt(t *time.Time) *TransactionCrea
 }
 
 // SetUpdatedAt sets the "updated_at" field.
-func (tc *TransactionCreate) SetUpdatedAt(t time.Time) *TransactionCreate {
+func (tc *TransferCreate) SetUpdatedAt(t time.Time) *TransferCreate {
 	tc.mutation.SetUpdatedAt(t)
 	return tc
 }
 
 // SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (tc *TransactionCreate) SetNillableUpdatedAt(t *time.Time) *TransactionCreate {
+func (tc *TransferCreate) SetNillableUpdatedAt(t *time.Time) *TransferCreate {
 	if t != nil {
 		tc.SetUpdatedAt(*t)
 	}
 	return tc
 }
 
-// Mutation returns the TransactionMutation object of the builder.
-func (tc *TransactionCreate) Mutation() *TransactionMutation {
+// Mutation returns the TransferMutation object of the builder.
+func (tc *TransferCreate) Mutation() *TransferMutation {
 	return tc.mutation
 }
 
-// Save creates the Transaction in the database.
-func (tc *TransactionCreate) Save(ctx context.Context) (*Transaction, error) {
+// Save creates the Transfer in the database.
+func (tc *TransferCreate) Save(ctx context.Context) (*Transfer, error) {
 	tc.defaults()
 	return withHooks(ctx, tc.sqlSave, tc.mutation, tc.hooks)
 }
 
 // SaveX calls Save and panics if Save returns an error.
-func (tc *TransactionCreate) SaveX(ctx context.Context) *Transaction {
+func (tc *TransferCreate) SaveX(ctx context.Context) *Transfer {
 	v, err := tc.Save(ctx)
 	if err != nil {
 		panic(err)
@@ -89,52 +101,58 @@ func (tc *TransactionCreate) SaveX(ctx context.Context) *Transaction {
 }
 
 // Exec executes the query.
-func (tc *TransactionCreate) Exec(ctx context.Context) error {
+func (tc *TransferCreate) Exec(ctx context.Context) error {
 	_, err := tc.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (tc *TransactionCreate) ExecX(ctx context.Context) {
+func (tc *TransferCreate) ExecX(ctx context.Context) {
 	if err := tc.Exec(ctx); err != nil {
 		panic(err)
 	}
 }
 
 // defaults sets the default values of the builder before save.
-func (tc *TransactionCreate) defaults() {
+func (tc *TransferCreate) defaults() {
 	if _, ok := tc.mutation.TransactionTime(); !ok {
-		v := transaction.DefaultTransactionTime()
+		v := transfer.DefaultTransactionTime()
 		tc.mutation.SetTransactionTime(v)
 	}
 	if _, ok := tc.mutation.CreatedAt(); !ok {
-		v := transaction.DefaultCreatedAt()
+		v := transfer.DefaultCreatedAt()
 		tc.mutation.SetCreatedAt(v)
 	}
 	if _, ok := tc.mutation.UpdatedAt(); !ok {
-		v := transaction.DefaultUpdatedAt()
+		v := transfer.DefaultUpdatedAt()
 		tc.mutation.SetUpdatedAt(v)
 	}
 }
 
 // check runs all checks and user-defined validators on the builder.
-func (tc *TransactionCreate) check() error {
+func (tc *TransferCreate) check() error {
 	if _, ok := tc.mutation.TransactionTime(); !ok {
-		return &ValidationError{Name: "TransactionTime", err: errors.New(`ent: missing required field "Transaction.TransactionTime"`)}
+		return &ValidationError{Name: "TransactionTime", err: errors.New(`ent: missing required field "Transfer.TransactionTime"`)}
+	}
+	if _, ok := tc.mutation.From(); !ok {
+		return &ValidationError{Name: "From", err: errors.New(`ent: missing required field "Transfer.From"`)}
+	}
+	if _, ok := tc.mutation.To(); !ok {
+		return &ValidationError{Name: "To", err: errors.New(`ent: missing required field "Transfer.To"`)}
 	}
 	if _, ok := tc.mutation.Amount(); !ok {
-		return &ValidationError{Name: "Amount", err: errors.New(`ent: missing required field "Transaction.Amount"`)}
+		return &ValidationError{Name: "Amount", err: errors.New(`ent: missing required field "Transfer.Amount"`)}
 	}
 	if _, ok := tc.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Transaction.created_at"`)}
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Transfer.created_at"`)}
 	}
 	if _, ok := tc.mutation.UpdatedAt(); !ok {
-		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Transaction.updated_at"`)}
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Transfer.updated_at"`)}
 	}
 	return nil
 }
 
-func (tc *TransactionCreate) sqlSave(ctx context.Context) (*Transaction, error) {
+func (tc *TransferCreate) sqlSave(ctx context.Context) (*Transfer, error) {
 	if err := tc.check(); err != nil {
 		return nil, err
 	}
@@ -152,51 +170,59 @@ func (tc *TransactionCreate) sqlSave(ctx context.Context) (*Transaction, error) 
 	return _node, nil
 }
 
-func (tc *TransactionCreate) createSpec() (*Transaction, *sqlgraph.CreateSpec) {
+func (tc *TransferCreate) createSpec() (*Transfer, *sqlgraph.CreateSpec) {
 	var (
-		_node = &Transaction{config: tc.config}
-		_spec = sqlgraph.NewCreateSpec(transaction.Table, sqlgraph.NewFieldSpec(transaction.FieldID, field.TypeInt))
+		_node = &Transfer{config: tc.config}
+		_spec = sqlgraph.NewCreateSpec(transfer.Table, sqlgraph.NewFieldSpec(transfer.FieldID, field.TypeInt))
 	)
 	if value, ok := tc.mutation.TransactionTime(); ok {
-		_spec.SetField(transaction.FieldTransactionTime, field.TypeTime, value)
+		_spec.SetField(transfer.FieldTransactionTime, field.TypeTime, value)
 		_node.TransactionTime = value
 	}
+	if value, ok := tc.mutation.From(); ok {
+		_spec.SetField(transfer.FieldFrom, field.TypeInt, value)
+		_node.From = value
+	}
+	if value, ok := tc.mutation.To(); ok {
+		_spec.SetField(transfer.FieldTo, field.TypeInt, value)
+		_node.To = value
+	}
 	if value, ok := tc.mutation.Amount(); ok {
-		_spec.SetField(transaction.FieldAmount, field.TypeInt, value)
+		_spec.SetField(transfer.FieldAmount, field.TypeInt, value)
 		_node.Amount = value
 	}
 	if value, ok := tc.mutation.CreatedAt(); ok {
-		_spec.SetField(transaction.FieldCreatedAt, field.TypeTime, value)
+		_spec.SetField(transfer.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
 	}
 	if value, ok := tc.mutation.UpdatedAt(); ok {
-		_spec.SetField(transaction.FieldUpdatedAt, field.TypeTime, value)
+		_spec.SetField(transfer.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
 	return _node, _spec
 }
 
-// TransactionCreateBulk is the builder for creating many Transaction entities in bulk.
-type TransactionCreateBulk struct {
+// TransferCreateBulk is the builder for creating many Transfer entities in bulk.
+type TransferCreateBulk struct {
 	config
 	err      error
-	builders []*TransactionCreate
+	builders []*TransferCreate
 }
 
-// Save creates the Transaction entities in the database.
-func (tcb *TransactionCreateBulk) Save(ctx context.Context) ([]*Transaction, error) {
+// Save creates the Transfer entities in the database.
+func (tcb *TransferCreateBulk) Save(ctx context.Context) ([]*Transfer, error) {
 	if tcb.err != nil {
 		return nil, tcb.err
 	}
 	specs := make([]*sqlgraph.CreateSpec, len(tcb.builders))
-	nodes := make([]*Transaction, len(tcb.builders))
+	nodes := make([]*Transfer, len(tcb.builders))
 	mutators := make([]Mutator, len(tcb.builders))
 	for i := range tcb.builders {
 		func(i int, root context.Context) {
 			builder := tcb.builders[i]
 			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
-				mutation, ok := m.(*TransactionMutation)
+				mutation, ok := m.(*TransferMutation)
 				if !ok {
 					return nil, fmt.Errorf("unexpected mutation type %T", m)
 				}
@@ -243,7 +269,7 @@ func (tcb *TransactionCreateBulk) Save(ctx context.Context) ([]*Transaction, err
 }
 
 // SaveX is like Save, but panics if an error occurs.
-func (tcb *TransactionCreateBulk) SaveX(ctx context.Context) []*Transaction {
+func (tcb *TransferCreateBulk) SaveX(ctx context.Context) []*Transfer {
 	v, err := tcb.Save(ctx)
 	if err != nil {
 		panic(err)
@@ -252,13 +278,13 @@ func (tcb *TransactionCreateBulk) SaveX(ctx context.Context) []*Transaction {
 }
 
 // Exec executes the query.
-func (tcb *TransactionCreateBulk) Exec(ctx context.Context) error {
+func (tcb *TransferCreateBulk) Exec(ctx context.Context) error {
 	_, err := tcb.Save(ctx)
 	return err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (tcb *TransactionCreateBulk) ExecX(ctx context.Context) {
+func (tcb *TransferCreateBulk) ExecX(ctx context.Context) {
 	if err := tcb.Exec(ctx); err != nil {
 		panic(err)
 	}

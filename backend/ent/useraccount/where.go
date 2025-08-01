@@ -56,7 +56,7 @@ func IDLTE(id int) predicate.UserAccount {
 }
 
 // AccountNumber applies equality check predicate on the "account_number" field. It's identical to AccountNumberEQ.
-func AccountNumber(v string) predicate.UserAccount {
+func AccountNumber(v int) predicate.UserAccount {
 	return predicate.UserAccount(sql.FieldEQ(FieldAccountNumber, v))
 }
 
@@ -71,68 +71,43 @@ func UpdatedAt(v time.Time) predicate.UserAccount {
 }
 
 // AccountNumberEQ applies the EQ predicate on the "account_number" field.
-func AccountNumberEQ(v string) predicate.UserAccount {
+func AccountNumberEQ(v int) predicate.UserAccount {
 	return predicate.UserAccount(sql.FieldEQ(FieldAccountNumber, v))
 }
 
 // AccountNumberNEQ applies the NEQ predicate on the "account_number" field.
-func AccountNumberNEQ(v string) predicate.UserAccount {
+func AccountNumberNEQ(v int) predicate.UserAccount {
 	return predicate.UserAccount(sql.FieldNEQ(FieldAccountNumber, v))
 }
 
 // AccountNumberIn applies the In predicate on the "account_number" field.
-func AccountNumberIn(vs ...string) predicate.UserAccount {
+func AccountNumberIn(vs ...int) predicate.UserAccount {
 	return predicate.UserAccount(sql.FieldIn(FieldAccountNumber, vs...))
 }
 
 // AccountNumberNotIn applies the NotIn predicate on the "account_number" field.
-func AccountNumberNotIn(vs ...string) predicate.UserAccount {
+func AccountNumberNotIn(vs ...int) predicate.UserAccount {
 	return predicate.UserAccount(sql.FieldNotIn(FieldAccountNumber, vs...))
 }
 
 // AccountNumberGT applies the GT predicate on the "account_number" field.
-func AccountNumberGT(v string) predicate.UserAccount {
+func AccountNumberGT(v int) predicate.UserAccount {
 	return predicate.UserAccount(sql.FieldGT(FieldAccountNumber, v))
 }
 
 // AccountNumberGTE applies the GTE predicate on the "account_number" field.
-func AccountNumberGTE(v string) predicate.UserAccount {
+func AccountNumberGTE(v int) predicate.UserAccount {
 	return predicate.UserAccount(sql.FieldGTE(FieldAccountNumber, v))
 }
 
 // AccountNumberLT applies the LT predicate on the "account_number" field.
-func AccountNumberLT(v string) predicate.UserAccount {
+func AccountNumberLT(v int) predicate.UserAccount {
 	return predicate.UserAccount(sql.FieldLT(FieldAccountNumber, v))
 }
 
 // AccountNumberLTE applies the LTE predicate on the "account_number" field.
-func AccountNumberLTE(v string) predicate.UserAccount {
+func AccountNumberLTE(v int) predicate.UserAccount {
 	return predicate.UserAccount(sql.FieldLTE(FieldAccountNumber, v))
-}
-
-// AccountNumberContains applies the Contains predicate on the "account_number" field.
-func AccountNumberContains(v string) predicate.UserAccount {
-	return predicate.UserAccount(sql.FieldContains(FieldAccountNumber, v))
-}
-
-// AccountNumberHasPrefix applies the HasPrefix predicate on the "account_number" field.
-func AccountNumberHasPrefix(v string) predicate.UserAccount {
-	return predicate.UserAccount(sql.FieldHasPrefix(FieldAccountNumber, v))
-}
-
-// AccountNumberHasSuffix applies the HasSuffix predicate on the "account_number" field.
-func AccountNumberHasSuffix(v string) predicate.UserAccount {
-	return predicate.UserAccount(sql.FieldHasSuffix(FieldAccountNumber, v))
-}
-
-// AccountNumberEqualFold applies the EqualFold predicate on the "account_number" field.
-func AccountNumberEqualFold(v string) predicate.UserAccount {
-	return predicate.UserAccount(sql.FieldEqualFold(FieldAccountNumber, v))
-}
-
-// AccountNumberContainsFold applies the ContainsFold predicate on the "account_number" field.
-func AccountNumberContainsFold(v string) predicate.UserAccount {
-	return predicate.UserAccount(sql.FieldContainsFold(FieldAccountNumber, v))
 }
 
 // BalanceEQ applies the EQ predicate on the "balance" field.

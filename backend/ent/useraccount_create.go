@@ -22,8 +22,8 @@ type UserAccountCreate struct {
 }
 
 // SetAccountNumber sets the "account_number" field.
-func (uac *UserAccountCreate) SetAccountNumber(s string) *UserAccountCreate {
-	uac.mutation.SetAccountNumber(s)
+func (uac *UserAccountCreate) SetAccountNumber(i int) *UserAccountCreate {
+	uac.mutation.SetAccountNumber(i)
 	return uac
 }
 
@@ -116,11 +116,6 @@ func (uac *UserAccountCreate) check() error {
 	if _, ok := uac.mutation.AccountNumber(); !ok {
 		return &ValidationError{Name: "account_number", err: errors.New(`ent: missing required field "UserAccount.account_number"`)}
 	}
-	if v, ok := uac.mutation.AccountNumber(); ok {
-		if err := useraccount.AccountNumberValidator(v); err != nil {
-			return &ValidationError{Name: "account_number", err: fmt.Errorf(`ent: validator failed for field "UserAccount.account_number": %w`, err)}
-		}
-	}
 	if _, ok := uac.mutation.Balance(); !ok {
 		return &ValidationError{Name: "balance", err: errors.New(`ent: missing required field "UserAccount.balance"`)}
 	}
@@ -157,7 +152,7 @@ func (uac *UserAccountCreate) createSpec() (*UserAccount, *sqlgraph.CreateSpec) 
 		_spec = sqlgraph.NewCreateSpec(useraccount.Table, sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt))
 	)
 	if value, ok := uac.mutation.AccountNumber(); ok {
-		_spec.SetField(useraccount.FieldAccountNumber, field.TypeString, value)
+		_spec.SetField(useraccount.FieldAccountNumber, field.TypeInt, value)
 		_node.AccountNumber = value
 	}
 	if value, ok := uac.mutation.Balance(); ok {

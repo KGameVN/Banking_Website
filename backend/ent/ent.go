@@ -11,6 +11,7 @@ import (
 
 	"comb.com/banking/ent/logintoken"
 	"comb.com/banking/ent/transaction"
+	"comb.com/banking/ent/transfer"
 	"comb.com/banking/ent/user"
 	"comb.com/banking/ent/useraccount"
 	"comb.com/banking/ent/userprofile"
@@ -79,6 +80,7 @@ func checkColumn(table, column string) error {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
 			logintoken.Table:  logintoken.ValidColumn,
 			transaction.Table: transaction.ValidColumn,
+			transfer.Table:    transfer.ValidColumn,
 			user.Table:        user.ValidColumn,
 			useraccount.Table: useraccount.ValidColumn,
 			userprofile.Table: userprofile.ValidColumn,

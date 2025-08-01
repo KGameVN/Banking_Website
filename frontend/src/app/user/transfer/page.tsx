@@ -7,28 +7,35 @@
 import React, { useState } from 'react';
 import style from '../../styles/componentstyle/defaultbuttonstyle.module.css';
 import Button from '../../components/button/button';
+import { useRouter} from "next/navigation";
 
 export default function Transfer() {
+  const router = useRouter();
   const [amount, setAmount] = useState<string>('');
   const [destinationAccount, setDestinationAccount] = useState<string>('');
   const [bank, setBank] = useState<string>('');
 
-  const sendAmount = () =>{
+  const sendAmount = async () =>{
     console.log("sending to account...")
+    const body = {
+      to_account_number : destinationAccount,
+      amount: amount,
+      bank: bank
+    };
+
     try {
       const res = await fetch("http://localhost:8080/user/transfer", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username, password, rememberMe }), // Gửi username thay vì email
+        body: JSON.stringify(body), // Gửi username thay vì email
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        console.log("Login success:", data);
-        setOpen(false);
+        console.log("Tranfer success:", body);
         router.push("/dashboard");
       } else {
         console.error("Login failed:", data.message);
