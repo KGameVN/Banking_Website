@@ -1,6 +1,7 @@
 package services
 
 import (
+	"log"
 	"net/http"
 
 	"comb.com/banking/ent/user"
@@ -31,24 +32,33 @@ func (s *Service) GetAccountInfo(c echo.Context) error {
 }
 
 func (s Service) Transaction(c echo.Context) error {
-	userID := c.Get("userID").(int)
+	// userID := c.Param("id")
 
 	type Request struct {
-		Amount float64 `json:"amount"`
+		Id     int64  `json:"id"`
+		Amount int64  `json:"amount"`
+		Type   string `json:"type"` // "deposit" hoặc "withdraw"
+		Time   string `json:"time"` // time on transaction
 	}
 	var req Request
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, echo.Map{"error": "Dữ liệu không hợp lệ"})
+		return &AppError{Code: CodeInvalidRequest, Message: "Dữ liệu không hợp lệ", Err: err}
+		// return c.JSON(http.StatusBadRequest, echo.Map{"error": "Dữ liệu không hợp lệ"})
 	}
 
 	ctx := c.Request().Context()
 
 	account, err := s.Repository.DbClient.UserAccount.
 		Query().
-		Where(useraccount.HasUserWith(user.IDEQ(userID))).
+		Where(useraccount.HasUserWith(user.AccountNumber(1))).
 		Only(ctx)
 	if err != nil {
+		log.Println(err)
 		return c.JSON(http.StatusNotFound, echo.Map{"error": "Không tìm thấy tài khoản"})
+	}
+
+	if req.Type != "dep" {
+		req.Amount = -req.Amount
 	}
 
 	newBalance := account.Balance + req.Amount
@@ -68,12 +78,14 @@ func (s Service) Transaction(c echo.Context) error {
 }
 
 func (s Service) Transfer(c echo.Context) error {
-	userID := c.Get("userID").(int)
+	// userID := c.Get("userID").(int)
 
 	type Request struct {
-		ToAccountNumber string  `json:"to_account_number"`
-		Amount          float64 `json:"amount"`
+		FromAccountNumber int64 `json:"from_account_number"`
+		ToAccountNumber   int   `json:"to_account_number"`
+		Amount            int64 `json:"amount"`
 	}
+
 	var req Request
 	if err := c.Bind(&req); err != nil || req.Amount <= 0 {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "Dữ liệu không hợp lệ"})
@@ -96,7 +108,7 @@ func (s Service) Transfer(c echo.Context) error {
 	// Tài khoản gửi
 	fromAcc, err := tx.UserAccount.
 		Query().
-		Where(useraccount.HasUserWith(user.IDEQ(userID))).
+		Where(useraccount.HasUserWith(user.AccountNumber(200))).
 		Only(ctx)
 	if err != nil {
 		_ = tx.Rollback()
@@ -106,7 +118,7 @@ func (s Service) Transfer(c echo.Context) error {
 	// Tài khoản nhận
 	toAcc, err := tx.UserAccount.
 		Query().
-		Where(useraccount.AccountNumberEQ(req.ToAccountNumber)).
+		Where(useraccount.AccountNumberEQ(int64(req.ToAccountNumber))).
 		Only(ctx)
 	if err != nil {
 		_ = tx.Rollback()

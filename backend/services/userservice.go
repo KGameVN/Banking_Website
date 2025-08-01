@@ -52,7 +52,7 @@ func (s Service) Login(c echo.Context) error {
 	if rememberMe {
 		expiryDate = time.Now().Add(120 * time.Hour)
 	}
-	_, err = s.Repository.DbClient.LoginToken.Create().
+	_, err = s.Repository.DbClient.Token.Create().
 		SetUserID(foundUser.ID).
 		SetToken(token).
 		SetExpiredtime(expiryDate).
@@ -63,9 +63,10 @@ func (s Service) Login(c echo.Context) error {
 		"message": "Login successful",
 		"token":   token,
 		"user": echo.Map{
-			"id":       foundUser.ID,
-			"username": foundUser.Username,
-			"email":    foundUser.Email,
+			"id":            foundUser.ID,
+			"accountnumber": foundUser.AccountNumber,
+			"username":      foundUser.Username,
+			"email":         foundUser.Email,
 		},
 	})
 }

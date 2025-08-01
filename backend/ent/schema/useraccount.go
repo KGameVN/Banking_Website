@@ -1,30 +1,37 @@
 package schema
 
 import (
-	"time"
-
 	"entgo.io/ent"
-	"entgo.io/ent/schema/field"
+	"entgo.io/ent/dialect/entsql"
+	"entgo.io/ent/schema"
 	"entgo.io/ent/schema/edge"
+	"entgo.io/ent/schema/field"
 )
 
-// UserAccount holds the schema definition for the UserAccount entity.
 type UserAccount struct {
 	ent.Schema
 }
 
-// Fields of the UserAccount.
-func (UserAccount) Fields() []ent.Field {
-	return []ent.Field{
-		field.String("account_number").Unique().NotEmpty(),
-		field.Float("balance").Default(0.0),
-		field.Time("updated_at").Default(time.Now).UpdateDefault(time.Now),
+func (UserAccount) Annotations() []schema.Annotation {
+	return []schema.Annotation{
+		entsql.Annotation{Table: "user_accounts"}, // khớp với DB thật
 	}
 }
 
-// Edges of the UserAccount.
+func (UserAccount) Fields() []ent.Field {
+	return []ent.Field{
+		field.Int64("account_number"),
+		field.Int64("balance"),
+	}
+}
+
 func (UserAccount) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("user", User.Type).Ref("account").Unique().Required(),
+		edge.From("user", User.Type).
+			Ref("accounts").
+			Unique(),
+		edge.To("transactions", Transaction.Type),
+		edge.To("outgoing_transfers", Transfer.Type),
+		edge.To("incoming_transfers", Transfer.Type),
 	}
 }

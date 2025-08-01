@@ -3,9 +3,8 @@
 package userprofile
 
 import (
-	"time"
-
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 const (
@@ -17,20 +16,23 @@ const (
 	FieldFirstname = "firstname"
 	// FieldLastname holds the string denoting the lastname field in the database.
 	FieldLastname = "lastname"
-	// FieldCmnd holds the string denoting the cmnd field in the database.
-	FieldCmnd = "cmnd"
 	// FieldAddress holds the string denoting the address field in the database.
 	FieldAddress = "address"
 	// FieldGender holds the string denoting the gender field in the database.
 	FieldGender = "gender"
 	// FieldBirthday holds the string denoting the birthday field in the database.
 	FieldBirthday = "birthday"
-	// FieldCreatedAt holds the string denoting the created_at field in the database.
-	FieldCreatedAt = "created_at"
-	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
-	FieldUpdatedAt = "updated_at"
+	// EdgeUser holds the string denoting the user edge name in mutations.
+	EdgeUser = "user"
 	// Table holds the table name of the userprofile in the database.
 	Table = "user_profiles"
+	// UserTable is the table that holds the user relation/edge.
+	UserTable = "user_profiles"
+	// UserInverseTable is the table name for the User entity.
+	// It exists in this package in order to avoid circular dependency with the "user" package.
+	UserInverseTable = "users"
+	// UserColumn is the table column denoting the user relation/edge.
+	UserColumn = "user_profile"
 )
 
 // Columns holds all SQL columns for userprofile fields.
@@ -38,12 +40,15 @@ var Columns = []string{
 	FieldID,
 	FieldFirstname,
 	FieldLastname,
-	FieldCmnd,
 	FieldAddress,
 	FieldGender,
 	FieldBirthday,
-	FieldCreatedAt,
-	FieldUpdatedAt,
+}
+
+// ForeignKeys holds the SQL foreign-keys that are owned by the "user_profiles"
+// table and are not defined as standalone fields in the schema.
+var ForeignKeys = []string{
+	"user_profile",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -53,29 +58,13 @@ func ValidColumn(column string) bool {
 			return true
 		}
 	}
+	for i := range ForeignKeys {
+		if column == ForeignKeys[i] {
+			return true
+		}
+	}
 	return false
 }
-
-var (
-	// FirstnameValidator is a validator for the "firstname" field. It is called by the builders before save.
-	FirstnameValidator func(string) error
-	// LastnameValidator is a validator for the "lastname" field. It is called by the builders before save.
-	LastnameValidator func(string) error
-	// CmndValidator is a validator for the "cmnd" field. It is called by the builders before save.
-	CmndValidator func(string) error
-	// AddressValidator is a validator for the "address" field. It is called by the builders before save.
-	AddressValidator func(string) error
-	// DefaultGender holds the default value on creation for the "gender" field.
-	DefaultGender bool
-	// BirthdayValidator is a validator for the "birthday" field. It is called by the builders before save.
-	BirthdayValidator func(string) error
-	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
-	DefaultCreatedAt func() time.Time
-	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
-	DefaultUpdatedAt func() time.Time
-	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
-	UpdateDefaultUpdatedAt func() time.Time
-)
 
 // OrderOption defines the ordering options for the UserProfile queries.
 type OrderOption func(*sql.Selector)
@@ -95,11 +84,6 @@ func ByLastname(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldLastname, opts...).ToFunc()
 }
 
-// ByCmnd orders the results by the cmnd field.
-func ByCmnd(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldCmnd, opts...).ToFunc()
-}
-
 // ByAddress orders the results by the address field.
 func ByAddress(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAddress, opts...).ToFunc()
@@ -115,12 +99,16 @@ func ByBirthday(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldBirthday, opts...).ToFunc()
 }
 
-// ByCreatedAt orders the results by the created_at field.
-func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
+// ByUserField orders the results by user field.
+func ByUserField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newUserStep(), sql.OrderByField(field, opts...))
+	}
 }
-
-// ByUpdatedAt orders the results by the updated_at field.
-func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
+func newUserStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(UserInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, true, UserTable, UserColumn),
+	)
 }

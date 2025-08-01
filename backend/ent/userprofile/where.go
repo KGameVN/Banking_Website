@@ -3,10 +3,9 @@
 package userprofile
 
 import (
-	"time"
-
 	"comb.com/banking/ent/predicate"
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 // ID filters vertices based on their ID field.
@@ -64,34 +63,19 @@ func Lastname(v string) predicate.UserProfile {
 	return predicate.UserProfile(sql.FieldEQ(FieldLastname, v))
 }
 
-// Cmnd applies equality check predicate on the "cmnd" field. It's identical to CmndEQ.
-func Cmnd(v string) predicate.UserProfile {
-	return predicate.UserProfile(sql.FieldEQ(FieldCmnd, v))
-}
-
 // Address applies equality check predicate on the "address" field. It's identical to AddressEQ.
 func Address(v string) predicate.UserProfile {
 	return predicate.UserProfile(sql.FieldEQ(FieldAddress, v))
 }
 
 // Gender applies equality check predicate on the "gender" field. It's identical to GenderEQ.
-func Gender(v bool) predicate.UserProfile {
+func Gender(v string) predicate.UserProfile {
 	return predicate.UserProfile(sql.FieldEQ(FieldGender, v))
 }
 
 // Birthday applies equality check predicate on the "birthday" field. It's identical to BirthdayEQ.
 func Birthday(v string) predicate.UserProfile {
 	return predicate.UserProfile(sql.FieldEQ(FieldBirthday, v))
-}
-
-// CreatedAt applies equality check predicate on the "created_at" field. It's identical to CreatedAtEQ.
-func CreatedAt(v time.Time) predicate.UserProfile {
-	return predicate.UserProfile(sql.FieldEQ(FieldCreatedAt, v))
-}
-
-// UpdatedAt applies equality check predicate on the "updated_at" field. It's identical to UpdatedAtEQ.
-func UpdatedAt(v time.Time) predicate.UserProfile {
-	return predicate.UserProfile(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
 // FirstnameEQ applies the EQ predicate on the "firstname" field.
@@ -224,71 +208,6 @@ func LastnameContainsFold(v string) predicate.UserProfile {
 	return predicate.UserProfile(sql.FieldContainsFold(FieldLastname, v))
 }
 
-// CmndEQ applies the EQ predicate on the "cmnd" field.
-func CmndEQ(v string) predicate.UserProfile {
-	return predicate.UserProfile(sql.FieldEQ(FieldCmnd, v))
-}
-
-// CmndNEQ applies the NEQ predicate on the "cmnd" field.
-func CmndNEQ(v string) predicate.UserProfile {
-	return predicate.UserProfile(sql.FieldNEQ(FieldCmnd, v))
-}
-
-// CmndIn applies the In predicate on the "cmnd" field.
-func CmndIn(vs ...string) predicate.UserProfile {
-	return predicate.UserProfile(sql.FieldIn(FieldCmnd, vs...))
-}
-
-// CmndNotIn applies the NotIn predicate on the "cmnd" field.
-func CmndNotIn(vs ...string) predicate.UserProfile {
-	return predicate.UserProfile(sql.FieldNotIn(FieldCmnd, vs...))
-}
-
-// CmndGT applies the GT predicate on the "cmnd" field.
-func CmndGT(v string) predicate.UserProfile {
-	return predicate.UserProfile(sql.FieldGT(FieldCmnd, v))
-}
-
-// CmndGTE applies the GTE predicate on the "cmnd" field.
-func CmndGTE(v string) predicate.UserProfile {
-	return predicate.UserProfile(sql.FieldGTE(FieldCmnd, v))
-}
-
-// CmndLT applies the LT predicate on the "cmnd" field.
-func CmndLT(v string) predicate.UserProfile {
-	return predicate.UserProfile(sql.FieldLT(FieldCmnd, v))
-}
-
-// CmndLTE applies the LTE predicate on the "cmnd" field.
-func CmndLTE(v string) predicate.UserProfile {
-	return predicate.UserProfile(sql.FieldLTE(FieldCmnd, v))
-}
-
-// CmndContains applies the Contains predicate on the "cmnd" field.
-func CmndContains(v string) predicate.UserProfile {
-	return predicate.UserProfile(sql.FieldContains(FieldCmnd, v))
-}
-
-// CmndHasPrefix applies the HasPrefix predicate on the "cmnd" field.
-func CmndHasPrefix(v string) predicate.UserProfile {
-	return predicate.UserProfile(sql.FieldHasPrefix(FieldCmnd, v))
-}
-
-// CmndHasSuffix applies the HasSuffix predicate on the "cmnd" field.
-func CmndHasSuffix(v string) predicate.UserProfile {
-	return predicate.UserProfile(sql.FieldHasSuffix(FieldCmnd, v))
-}
-
-// CmndEqualFold applies the EqualFold predicate on the "cmnd" field.
-func CmndEqualFold(v string) predicate.UserProfile {
-	return predicate.UserProfile(sql.FieldEqualFold(FieldCmnd, v))
-}
-
-// CmndContainsFold applies the ContainsFold predicate on the "cmnd" field.
-func CmndContainsFold(v string) predicate.UserProfile {
-	return predicate.UserProfile(sql.FieldContainsFold(FieldCmnd, v))
-}
-
 // AddressEQ applies the EQ predicate on the "address" field.
 func AddressEQ(v string) predicate.UserProfile {
 	return predicate.UserProfile(sql.FieldEQ(FieldAddress, v))
@@ -355,13 +274,68 @@ func AddressContainsFold(v string) predicate.UserProfile {
 }
 
 // GenderEQ applies the EQ predicate on the "gender" field.
-func GenderEQ(v bool) predicate.UserProfile {
+func GenderEQ(v string) predicate.UserProfile {
 	return predicate.UserProfile(sql.FieldEQ(FieldGender, v))
 }
 
 // GenderNEQ applies the NEQ predicate on the "gender" field.
-func GenderNEQ(v bool) predicate.UserProfile {
+func GenderNEQ(v string) predicate.UserProfile {
 	return predicate.UserProfile(sql.FieldNEQ(FieldGender, v))
+}
+
+// GenderIn applies the In predicate on the "gender" field.
+func GenderIn(vs ...string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldIn(FieldGender, vs...))
+}
+
+// GenderNotIn applies the NotIn predicate on the "gender" field.
+func GenderNotIn(vs ...string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldNotIn(FieldGender, vs...))
+}
+
+// GenderGT applies the GT predicate on the "gender" field.
+func GenderGT(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldGT(FieldGender, v))
+}
+
+// GenderGTE applies the GTE predicate on the "gender" field.
+func GenderGTE(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldGTE(FieldGender, v))
+}
+
+// GenderLT applies the LT predicate on the "gender" field.
+func GenderLT(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldLT(FieldGender, v))
+}
+
+// GenderLTE applies the LTE predicate on the "gender" field.
+func GenderLTE(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldLTE(FieldGender, v))
+}
+
+// GenderContains applies the Contains predicate on the "gender" field.
+func GenderContains(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldContains(FieldGender, v))
+}
+
+// GenderHasPrefix applies the HasPrefix predicate on the "gender" field.
+func GenderHasPrefix(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldHasPrefix(FieldGender, v))
+}
+
+// GenderHasSuffix applies the HasSuffix predicate on the "gender" field.
+func GenderHasSuffix(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldHasSuffix(FieldGender, v))
+}
+
+// GenderEqualFold applies the EqualFold predicate on the "gender" field.
+func GenderEqualFold(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldEqualFold(FieldGender, v))
+}
+
+// GenderContainsFold applies the ContainsFold predicate on the "gender" field.
+func GenderContainsFold(v string) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldContainsFold(FieldGender, v))
 }
 
 // BirthdayEQ applies the EQ predicate on the "birthday" field.
@@ -429,84 +403,27 @@ func BirthdayContainsFold(v string) predicate.UserProfile {
 	return predicate.UserProfile(sql.FieldContainsFold(FieldBirthday, v))
 }
 
-// CreatedAtEQ applies the EQ predicate on the "created_at" field.
-func CreatedAtEQ(v time.Time) predicate.UserProfile {
-	return predicate.UserProfile(sql.FieldEQ(FieldCreatedAt, v))
+// HasUser applies the HasEdge predicate on the "user" edge.
+func HasUser() predicate.UserProfile {
+	return predicate.UserProfile(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, true, UserTable, UserColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
 }
 
-// CreatedAtNEQ applies the NEQ predicate on the "created_at" field.
-func CreatedAtNEQ(v time.Time) predicate.UserProfile {
-	return predicate.UserProfile(sql.FieldNEQ(FieldCreatedAt, v))
-}
-
-// CreatedAtIn applies the In predicate on the "created_at" field.
-func CreatedAtIn(vs ...time.Time) predicate.UserProfile {
-	return predicate.UserProfile(sql.FieldIn(FieldCreatedAt, vs...))
-}
-
-// CreatedAtNotIn applies the NotIn predicate on the "created_at" field.
-func CreatedAtNotIn(vs ...time.Time) predicate.UserProfile {
-	return predicate.UserProfile(sql.FieldNotIn(FieldCreatedAt, vs...))
-}
-
-// CreatedAtGT applies the GT predicate on the "created_at" field.
-func CreatedAtGT(v time.Time) predicate.UserProfile {
-	return predicate.UserProfile(sql.FieldGT(FieldCreatedAt, v))
-}
-
-// CreatedAtGTE applies the GTE predicate on the "created_at" field.
-func CreatedAtGTE(v time.Time) predicate.UserProfile {
-	return predicate.UserProfile(sql.FieldGTE(FieldCreatedAt, v))
-}
-
-// CreatedAtLT applies the LT predicate on the "created_at" field.
-func CreatedAtLT(v time.Time) predicate.UserProfile {
-	return predicate.UserProfile(sql.FieldLT(FieldCreatedAt, v))
-}
-
-// CreatedAtLTE applies the LTE predicate on the "created_at" field.
-func CreatedAtLTE(v time.Time) predicate.UserProfile {
-	return predicate.UserProfile(sql.FieldLTE(FieldCreatedAt, v))
-}
-
-// UpdatedAtEQ applies the EQ predicate on the "updated_at" field.
-func UpdatedAtEQ(v time.Time) predicate.UserProfile {
-	return predicate.UserProfile(sql.FieldEQ(FieldUpdatedAt, v))
-}
-
-// UpdatedAtNEQ applies the NEQ predicate on the "updated_at" field.
-func UpdatedAtNEQ(v time.Time) predicate.UserProfile {
-	return predicate.UserProfile(sql.FieldNEQ(FieldUpdatedAt, v))
-}
-
-// UpdatedAtIn applies the In predicate on the "updated_at" field.
-func UpdatedAtIn(vs ...time.Time) predicate.UserProfile {
-	return predicate.UserProfile(sql.FieldIn(FieldUpdatedAt, vs...))
-}
-
-// UpdatedAtNotIn applies the NotIn predicate on the "updated_at" field.
-func UpdatedAtNotIn(vs ...time.Time) predicate.UserProfile {
-	return predicate.UserProfile(sql.FieldNotIn(FieldUpdatedAt, vs...))
-}
-
-// UpdatedAtGT applies the GT predicate on the "updated_at" field.
-func UpdatedAtGT(v time.Time) predicate.UserProfile {
-	return predicate.UserProfile(sql.FieldGT(FieldUpdatedAt, v))
-}
-
-// UpdatedAtGTE applies the GTE predicate on the "updated_at" field.
-func UpdatedAtGTE(v time.Time) predicate.UserProfile {
-	return predicate.UserProfile(sql.FieldGTE(FieldUpdatedAt, v))
-}
-
-// UpdatedAtLT applies the LT predicate on the "updated_at" field.
-func UpdatedAtLT(v time.Time) predicate.UserProfile {
-	return predicate.UserProfile(sql.FieldLT(FieldUpdatedAt, v))
-}
-
-// UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
-func UpdatedAtLTE(v time.Time) predicate.UserProfile {
-	return predicate.UserProfile(sql.FieldLTE(FieldUpdatedAt, v))
+// HasUserWith applies the HasEdge predicate on the "user" edge with a given conditions (other predicates).
+func HasUserWith(preds ...predicate.User) predicate.UserProfile {
+	return predicate.UserProfile(func(s *sql.Selector) {
+		step := newUserStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
 }
 
 // And groups predicates with the AND operator between them.

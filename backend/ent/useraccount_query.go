@@ -4,10 +4,13 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
 
 	"comb.com/banking/ent/predicate"
+	"comb.com/banking/ent/transaction"
+	"comb.com/banking/ent/transfer"
 	"comb.com/banking/ent/user"
 	"comb.com/banking/ent/useraccount"
 	"entgo.io/ent"
@@ -19,12 +22,15 @@ import (
 // UserAccountQuery is the builder for querying UserAccount entities.
 type UserAccountQuery struct {
 	config
-	ctx        *QueryContext
-	order      []useraccount.OrderOption
-	inters     []Interceptor
-	predicates []predicate.UserAccount
-	withUser   *UserQuery
-	withFKs    bool
+	ctx                   *QueryContext
+	order                 []useraccount.OrderOption
+	inters                []Interceptor
+	predicates            []predicate.UserAccount
+	withUser              *UserQuery
+	withTransactions      *TransactionQuery
+	withOutgoingTransfers *TransferQuery
+	withIncomingTransfers *TransferQuery
+	withFKs               bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -75,7 +81,73 @@ func (uaq *UserAccountQuery) QueryUser() *UserQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(useraccount.Table, useraccount.FieldID, selector),
 			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, true, useraccount.UserTable, useraccount.UserColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, useraccount.UserTable, useraccount.UserColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(uaq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryTransactions chains the current query on the "transactions" edge.
+func (uaq *UserAccountQuery) QueryTransactions() *TransactionQuery {
+	query := (&TransactionClient{config: uaq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uaq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uaq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(useraccount.Table, useraccount.FieldID, selector),
+			sqlgraph.To(transaction.Table, transaction.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, useraccount.TransactionsTable, useraccount.TransactionsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(uaq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryOutgoingTransfers chains the current query on the "outgoing_transfers" edge.
+func (uaq *UserAccountQuery) QueryOutgoingTransfers() *TransferQuery {
+	query := (&TransferClient{config: uaq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uaq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uaq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(useraccount.Table, useraccount.FieldID, selector),
+			sqlgraph.To(transfer.Table, transfer.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, useraccount.OutgoingTransfersTable, useraccount.OutgoingTransfersColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(uaq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryIncomingTransfers chains the current query on the "incoming_transfers" edge.
+func (uaq *UserAccountQuery) QueryIncomingTransfers() *TransferQuery {
+	query := (&TransferClient{config: uaq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uaq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uaq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(useraccount.Table, useraccount.FieldID, selector),
+			sqlgraph.To(transfer.Table, transfer.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, useraccount.IncomingTransfersTable, useraccount.IncomingTransfersColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(uaq.driver.Dialect(), step)
 		return fromU, nil
@@ -270,12 +342,15 @@ func (uaq *UserAccountQuery) Clone() *UserAccountQuery {
 		return nil
 	}
 	return &UserAccountQuery{
-		config:     uaq.config,
-		ctx:        uaq.ctx.Clone(),
-		order:      append([]useraccount.OrderOption{}, uaq.order...),
-		inters:     append([]Interceptor{}, uaq.inters...),
-		predicates: append([]predicate.UserAccount{}, uaq.predicates...),
-		withUser:   uaq.withUser.Clone(),
+		config:                uaq.config,
+		ctx:                   uaq.ctx.Clone(),
+		order:                 append([]useraccount.OrderOption{}, uaq.order...),
+		inters:                append([]Interceptor{}, uaq.inters...),
+		predicates:            append([]predicate.UserAccount{}, uaq.predicates...),
+		withUser:              uaq.withUser.Clone(),
+		withTransactions:      uaq.withTransactions.Clone(),
+		withOutgoingTransfers: uaq.withOutgoingTransfers.Clone(),
+		withIncomingTransfers: uaq.withIncomingTransfers.Clone(),
 		// clone intermediate query.
 		sql:  uaq.sql.Clone(),
 		path: uaq.path,
@@ -293,13 +368,46 @@ func (uaq *UserAccountQuery) WithUser(opts ...func(*UserQuery)) *UserAccountQuer
 	return uaq
 }
 
+// WithTransactions tells the query-builder to eager-load the nodes that are connected to
+// the "transactions" edge. The optional arguments are used to configure the query builder of the edge.
+func (uaq *UserAccountQuery) WithTransactions(opts ...func(*TransactionQuery)) *UserAccountQuery {
+	query := (&TransactionClient{config: uaq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	uaq.withTransactions = query
+	return uaq
+}
+
+// WithOutgoingTransfers tells the query-builder to eager-load the nodes that are connected to
+// the "outgoing_transfers" edge. The optional arguments are used to configure the query builder of the edge.
+func (uaq *UserAccountQuery) WithOutgoingTransfers(opts ...func(*TransferQuery)) *UserAccountQuery {
+	query := (&TransferClient{config: uaq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	uaq.withOutgoingTransfers = query
+	return uaq
+}
+
+// WithIncomingTransfers tells the query-builder to eager-load the nodes that are connected to
+// the "incoming_transfers" edge. The optional arguments are used to configure the query builder of the edge.
+func (uaq *UserAccountQuery) WithIncomingTransfers(opts ...func(*TransferQuery)) *UserAccountQuery {
+	query := (&TransferClient{config: uaq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	uaq.withIncomingTransfers = query
+	return uaq
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
 // Example:
 //
 //	var v []struct {
-//		AccountNumber string `json:"account_number,omitempty"`
+//		AccountNumber int64 `json:"account_number,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
@@ -322,7 +430,7 @@ func (uaq *UserAccountQuery) GroupBy(field string, fields ...string) *UserAccoun
 // Example:
 //
 //	var v []struct {
-//		AccountNumber string `json:"account_number,omitempty"`
+//		AccountNumber int64 `json:"account_number,omitempty"`
 //	}
 //
 //	client.UserAccount.Query().
@@ -372,8 +480,11 @@ func (uaq *UserAccountQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 		nodes       = []*UserAccount{}
 		withFKs     = uaq.withFKs
 		_spec       = uaq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [4]bool{
 			uaq.withUser != nil,
+			uaq.withTransactions != nil,
+			uaq.withOutgoingTransfers != nil,
+			uaq.withIncomingTransfers != nil,
 		}
 	)
 	if uaq.withUser != nil {
@@ -406,6 +517,27 @@ func (uaq *UserAccountQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 			return nil, err
 		}
 	}
+	if query := uaq.withTransactions; query != nil {
+		if err := uaq.loadTransactions(ctx, query, nodes,
+			func(n *UserAccount) { n.Edges.Transactions = []*Transaction{} },
+			func(n *UserAccount, e *Transaction) { n.Edges.Transactions = append(n.Edges.Transactions, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := uaq.withOutgoingTransfers; query != nil {
+		if err := uaq.loadOutgoingTransfers(ctx, query, nodes,
+			func(n *UserAccount) { n.Edges.OutgoingTransfers = []*Transfer{} },
+			func(n *UserAccount, e *Transfer) { n.Edges.OutgoingTransfers = append(n.Edges.OutgoingTransfers, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := uaq.withIncomingTransfers; query != nil {
+		if err := uaq.loadIncomingTransfers(ctx, query, nodes,
+			func(n *UserAccount) { n.Edges.IncomingTransfers = []*Transfer{} },
+			func(n *UserAccount, e *Transfer) { n.Edges.IncomingTransfers = append(n.Edges.IncomingTransfers, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
 }
 
@@ -413,10 +545,10 @@ func (uaq *UserAccountQuery) loadUser(ctx context.Context, query *UserQuery, nod
 	ids := make([]int, 0, len(nodes))
 	nodeids := make(map[int][]*UserAccount)
 	for i := range nodes {
-		if nodes[i].user_account == nil {
+		if nodes[i].user_accounts == nil {
 			continue
 		}
-		fk := *nodes[i].user_account
+		fk := *nodes[i].user_accounts
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -433,11 +565,104 @@ func (uaq *UserAccountQuery) loadUser(ctx context.Context, query *UserQuery, nod
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "user_account" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "user_accounts" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
 		}
+	}
+	return nil
+}
+func (uaq *UserAccountQuery) loadTransactions(ctx context.Context, query *TransactionQuery, nodes []*UserAccount, init func(*UserAccount), assign func(*UserAccount, *Transaction)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*UserAccount)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Transaction(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(useraccount.TransactionsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.user_account_transactions
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "user_account_transactions" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "user_account_transactions" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (uaq *UserAccountQuery) loadOutgoingTransfers(ctx context.Context, query *TransferQuery, nodes []*UserAccount, init func(*UserAccount), assign func(*UserAccount, *Transfer)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*UserAccount)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Transfer(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(useraccount.OutgoingTransfersColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.user_account_outgoing_transfers
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "user_account_outgoing_transfers" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "user_account_outgoing_transfers" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (uaq *UserAccountQuery) loadIncomingTransfers(ctx context.Context, query *TransferQuery, nodes []*UserAccount, init func(*UserAccount), assign func(*UserAccount, *Transfer)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*UserAccount)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Transfer(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(useraccount.IncomingTransfersColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.user_account_incoming_transfers
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "user_account_incoming_transfers" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "user_account_incoming_transfers" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
 	}
 	return nil
 }

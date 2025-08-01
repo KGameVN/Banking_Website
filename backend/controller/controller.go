@@ -4,7 +4,6 @@ import (
 	"log"
 	"sync"
 
-	a "comb.com/banking/middleware"
 	"comb.com/banking/services"
 	"github.com/labstack/echo/v4"
 	mid "github.com/labstack/echo/v4/middleware"
@@ -67,6 +66,7 @@ func (c *Controller) Start() {
 	if err := c.e.Start(":8080"); err != nil {
 		log.Fatal("Không thể khởi động server: ", err)
 	}
+
 }
 
 // setupRoutes khai báo các endpoint
@@ -74,8 +74,10 @@ func (c *Controller) setupRoutes() error {
 
 	c.e.POST("/login", c.services.Login)
 
-	userGroup := c.e.Group("/account", a.JWTMiddleware)
-	userGroup.GET("/trans_history", c.services.GetTransHistory)
-	userGroup.POST("/transfer", c.services.Transfer)
+	//userGroup := c.e.Group("/account", a.JWTMiddleware)
+	//userGroup.GET("/trans_history", c.services.GetTransHistory)
+	//userGroup.POST("/transfer", c.services.Transfer)
+	c.e.POST("/account/transaction/:id", c.services.Transaction)
+	c.e.POST("/account/transfer", c.services.Transfer)
 	return nil
 }

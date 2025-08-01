@@ -6,10 +6,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"comb.com/banking/ent/predicate"
 	"comb.com/banking/ent/transaction"
+	"comb.com/banking/ent/useraccount"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -28,70 +28,14 @@ func (tu *TransactionUpdate) Where(ps ...predicate.Transaction) *TransactionUpda
 	return tu
 }
 
-// SetTransactionTime sets the "TransactionTime" field.
-func (tu *TransactionUpdate) SetTransactionTime(t time.Time) *TransactionUpdate {
-	tu.mutation.SetTransactionTime(t)
-	return tu
-}
-
-// SetNillableTransactionTime sets the "TransactionTime" field if the given value is not nil.
-func (tu *TransactionUpdate) SetNillableTransactionTime(t *time.Time) *TransactionUpdate {
-	if t != nil {
-		tu.SetTransactionTime(*t)
-	}
-	return tu
-}
-
-// SetFrom sets the "From" field.
-func (tu *TransactionUpdate) SetFrom(i int) *TransactionUpdate {
-	tu.mutation.ResetFrom()
-	tu.mutation.SetFrom(i)
-	return tu
-}
-
-// SetNillableFrom sets the "From" field if the given value is not nil.
-func (tu *TransactionUpdate) SetNillableFrom(i *int) *TransactionUpdate {
-	if i != nil {
-		tu.SetFrom(*i)
-	}
-	return tu
-}
-
-// AddFrom adds i to the "From" field.
-func (tu *TransactionUpdate) AddFrom(i int) *TransactionUpdate {
-	tu.mutation.AddFrom(i)
-	return tu
-}
-
-// SetTo sets the "To" field.
-func (tu *TransactionUpdate) SetTo(i int) *TransactionUpdate {
-	tu.mutation.ResetTo()
-	tu.mutation.SetTo(i)
-	return tu
-}
-
-// SetNillableTo sets the "To" field if the given value is not nil.
-func (tu *TransactionUpdate) SetNillableTo(i *int) *TransactionUpdate {
-	if i != nil {
-		tu.SetTo(*i)
-	}
-	return tu
-}
-
-// AddTo adds i to the "To" field.
-func (tu *TransactionUpdate) AddTo(i int) *TransactionUpdate {
-	tu.mutation.AddTo(i)
-	return tu
-}
-
-// SetAmount sets the "Amount" field.
+// SetAmount sets the "amount" field.
 func (tu *TransactionUpdate) SetAmount(i int) *TransactionUpdate {
 	tu.mutation.ResetAmount()
 	tu.mutation.SetAmount(i)
 	return tu
 }
 
-// SetNillableAmount sets the "Amount" field if the given value is not nil.
+// SetNillableAmount sets the "amount" field if the given value is not nil.
 func (tu *TransactionUpdate) SetNillableAmount(i *int) *TransactionUpdate {
 	if i != nil {
 		tu.SetAmount(*i)
@@ -99,30 +43,29 @@ func (tu *TransactionUpdate) SetNillableAmount(i *int) *TransactionUpdate {
 	return tu
 }
 
-// AddAmount adds i to the "Amount" field.
+// AddAmount adds i to the "amount" field.
 func (tu *TransactionUpdate) AddAmount(i int) *TransactionUpdate {
 	tu.mutation.AddAmount(i)
 	return tu
 }
 
-// SetCreatedAt sets the "created_at" field.
-func (tu *TransactionUpdate) SetCreatedAt(t time.Time) *TransactionUpdate {
-	tu.mutation.SetCreatedAt(t)
+// SetAccountID sets the "account" edge to the UserAccount entity by ID.
+func (tu *TransactionUpdate) SetAccountID(id int) *TransactionUpdate {
+	tu.mutation.SetAccountID(id)
 	return tu
 }
 
-// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (tu *TransactionUpdate) SetNillableCreatedAt(t *time.Time) *TransactionUpdate {
-	if t != nil {
-		tu.SetCreatedAt(*t)
+// SetNillableAccountID sets the "account" edge to the UserAccount entity by ID if the given value is not nil.
+func (tu *TransactionUpdate) SetNillableAccountID(id *int) *TransactionUpdate {
+	if id != nil {
+		tu = tu.SetAccountID(*id)
 	}
 	return tu
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (tu *TransactionUpdate) SetUpdatedAt(t time.Time) *TransactionUpdate {
-	tu.mutation.SetUpdatedAt(t)
-	return tu
+// SetAccount sets the "account" edge to the UserAccount entity.
+func (tu *TransactionUpdate) SetAccount(u *UserAccount) *TransactionUpdate {
+	return tu.SetAccountID(u.ID)
 }
 
 // Mutation returns the TransactionMutation object of the builder.
@@ -130,9 +73,14 @@ func (tu *TransactionUpdate) Mutation() *TransactionMutation {
 	return tu.mutation
 }
 
+// ClearAccount clears the "account" edge to the UserAccount entity.
+func (tu *TransactionUpdate) ClearAccount() *TransactionUpdate {
+	tu.mutation.ClearAccount()
+	return tu
+}
+
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (tu *TransactionUpdate) Save(ctx context.Context) (int, error) {
-	tu.defaults()
 	return withHooks(ctx, tu.sqlSave, tu.mutation, tu.hooks)
 }
 
@@ -158,14 +106,6 @@ func (tu *TransactionUpdate) ExecX(ctx context.Context) {
 	}
 }
 
-// defaults sets the default values of the builder before save.
-func (tu *TransactionUpdate) defaults() {
-	if _, ok := tu.mutation.UpdatedAt(); !ok {
-		v := transaction.UpdateDefaultUpdatedAt()
-		tu.mutation.SetUpdatedAt(v)
-	}
-}
-
 func (tu *TransactionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	_spec := sqlgraph.NewUpdateSpec(transaction.Table, transaction.Columns, sqlgraph.NewFieldSpec(transaction.FieldID, field.TypeInt))
 	if ps := tu.mutation.predicates; len(ps) > 0 {
@@ -175,32 +115,40 @@ func (tu *TransactionUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := tu.mutation.TransactionTime(); ok {
-		_spec.SetField(transaction.FieldTransactionTime, field.TypeTime, value)
-	}
-	if value, ok := tu.mutation.From(); ok {
-		_spec.SetField(transaction.FieldFrom, field.TypeInt, value)
-	}
-	if value, ok := tu.mutation.AddedFrom(); ok {
-		_spec.AddField(transaction.FieldFrom, field.TypeInt, value)
-	}
-	if value, ok := tu.mutation.To(); ok {
-		_spec.SetField(transaction.FieldTo, field.TypeInt, value)
-	}
-	if value, ok := tu.mutation.AddedTo(); ok {
-		_spec.AddField(transaction.FieldTo, field.TypeInt, value)
-	}
 	if value, ok := tu.mutation.Amount(); ok {
 		_spec.SetField(transaction.FieldAmount, field.TypeInt, value)
 	}
 	if value, ok := tu.mutation.AddedAmount(); ok {
 		_spec.AddField(transaction.FieldAmount, field.TypeInt, value)
 	}
-	if value, ok := tu.mutation.CreatedAt(); ok {
-		_spec.SetField(transaction.FieldCreatedAt, field.TypeTime, value)
+	if tu.mutation.AccountCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   transaction.AccountTable,
+			Columns: []string{transaction.AccountColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if value, ok := tu.mutation.UpdatedAt(); ok {
-		_spec.SetField(transaction.FieldUpdatedAt, field.TypeTime, value)
+	if nodes := tu.mutation.AccountIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   transaction.AccountTable,
+			Columns: []string{transaction.AccountColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, tu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -222,70 +170,14 @@ type TransactionUpdateOne struct {
 	mutation *TransactionMutation
 }
 
-// SetTransactionTime sets the "TransactionTime" field.
-func (tuo *TransactionUpdateOne) SetTransactionTime(t time.Time) *TransactionUpdateOne {
-	tuo.mutation.SetTransactionTime(t)
-	return tuo
-}
-
-// SetNillableTransactionTime sets the "TransactionTime" field if the given value is not nil.
-func (tuo *TransactionUpdateOne) SetNillableTransactionTime(t *time.Time) *TransactionUpdateOne {
-	if t != nil {
-		tuo.SetTransactionTime(*t)
-	}
-	return tuo
-}
-
-// SetFrom sets the "From" field.
-func (tuo *TransactionUpdateOne) SetFrom(i int) *TransactionUpdateOne {
-	tuo.mutation.ResetFrom()
-	tuo.mutation.SetFrom(i)
-	return tuo
-}
-
-// SetNillableFrom sets the "From" field if the given value is not nil.
-func (tuo *TransactionUpdateOne) SetNillableFrom(i *int) *TransactionUpdateOne {
-	if i != nil {
-		tuo.SetFrom(*i)
-	}
-	return tuo
-}
-
-// AddFrom adds i to the "From" field.
-func (tuo *TransactionUpdateOne) AddFrom(i int) *TransactionUpdateOne {
-	tuo.mutation.AddFrom(i)
-	return tuo
-}
-
-// SetTo sets the "To" field.
-func (tuo *TransactionUpdateOne) SetTo(i int) *TransactionUpdateOne {
-	tuo.mutation.ResetTo()
-	tuo.mutation.SetTo(i)
-	return tuo
-}
-
-// SetNillableTo sets the "To" field if the given value is not nil.
-func (tuo *TransactionUpdateOne) SetNillableTo(i *int) *TransactionUpdateOne {
-	if i != nil {
-		tuo.SetTo(*i)
-	}
-	return tuo
-}
-
-// AddTo adds i to the "To" field.
-func (tuo *TransactionUpdateOne) AddTo(i int) *TransactionUpdateOne {
-	tuo.mutation.AddTo(i)
-	return tuo
-}
-
-// SetAmount sets the "Amount" field.
+// SetAmount sets the "amount" field.
 func (tuo *TransactionUpdateOne) SetAmount(i int) *TransactionUpdateOne {
 	tuo.mutation.ResetAmount()
 	tuo.mutation.SetAmount(i)
 	return tuo
 }
 
-// SetNillableAmount sets the "Amount" field if the given value is not nil.
+// SetNillableAmount sets the "amount" field if the given value is not nil.
 func (tuo *TransactionUpdateOne) SetNillableAmount(i *int) *TransactionUpdateOne {
 	if i != nil {
 		tuo.SetAmount(*i)
@@ -293,35 +185,40 @@ func (tuo *TransactionUpdateOne) SetNillableAmount(i *int) *TransactionUpdateOne
 	return tuo
 }
 
-// AddAmount adds i to the "Amount" field.
+// AddAmount adds i to the "amount" field.
 func (tuo *TransactionUpdateOne) AddAmount(i int) *TransactionUpdateOne {
 	tuo.mutation.AddAmount(i)
 	return tuo
 }
 
-// SetCreatedAt sets the "created_at" field.
-func (tuo *TransactionUpdateOne) SetCreatedAt(t time.Time) *TransactionUpdateOne {
-	tuo.mutation.SetCreatedAt(t)
+// SetAccountID sets the "account" edge to the UserAccount entity by ID.
+func (tuo *TransactionUpdateOne) SetAccountID(id int) *TransactionUpdateOne {
+	tuo.mutation.SetAccountID(id)
 	return tuo
 }
 
-// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (tuo *TransactionUpdateOne) SetNillableCreatedAt(t *time.Time) *TransactionUpdateOne {
-	if t != nil {
-		tuo.SetCreatedAt(*t)
+// SetNillableAccountID sets the "account" edge to the UserAccount entity by ID if the given value is not nil.
+func (tuo *TransactionUpdateOne) SetNillableAccountID(id *int) *TransactionUpdateOne {
+	if id != nil {
+		tuo = tuo.SetAccountID(*id)
 	}
 	return tuo
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (tuo *TransactionUpdateOne) SetUpdatedAt(t time.Time) *TransactionUpdateOne {
-	tuo.mutation.SetUpdatedAt(t)
-	return tuo
+// SetAccount sets the "account" edge to the UserAccount entity.
+func (tuo *TransactionUpdateOne) SetAccount(u *UserAccount) *TransactionUpdateOne {
+	return tuo.SetAccountID(u.ID)
 }
 
 // Mutation returns the TransactionMutation object of the builder.
 func (tuo *TransactionUpdateOne) Mutation() *TransactionMutation {
 	return tuo.mutation
+}
+
+// ClearAccount clears the "account" edge to the UserAccount entity.
+func (tuo *TransactionUpdateOne) ClearAccount() *TransactionUpdateOne {
+	tuo.mutation.ClearAccount()
+	return tuo
 }
 
 // Where appends a list predicates to the TransactionUpdate builder.
@@ -339,7 +236,6 @@ func (tuo *TransactionUpdateOne) Select(field string, fields ...string) *Transac
 
 // Save executes the query and returns the updated Transaction entity.
 func (tuo *TransactionUpdateOne) Save(ctx context.Context) (*Transaction, error) {
-	tuo.defaults()
 	return withHooks(ctx, tuo.sqlSave, tuo.mutation, tuo.hooks)
 }
 
@@ -362,14 +258,6 @@ func (tuo *TransactionUpdateOne) Exec(ctx context.Context) error {
 func (tuo *TransactionUpdateOne) ExecX(ctx context.Context) {
 	if err := tuo.Exec(ctx); err != nil {
 		panic(err)
-	}
-}
-
-// defaults sets the default values of the builder before save.
-func (tuo *TransactionUpdateOne) defaults() {
-	if _, ok := tuo.mutation.UpdatedAt(); !ok {
-		v := transaction.UpdateDefaultUpdatedAt()
-		tuo.mutation.SetUpdatedAt(v)
 	}
 }
 
@@ -399,32 +287,40 @@ func (tuo *TransactionUpdateOne) sqlSave(ctx context.Context) (_node *Transactio
 			}
 		}
 	}
-	if value, ok := tuo.mutation.TransactionTime(); ok {
-		_spec.SetField(transaction.FieldTransactionTime, field.TypeTime, value)
-	}
-	if value, ok := tuo.mutation.From(); ok {
-		_spec.SetField(transaction.FieldFrom, field.TypeInt, value)
-	}
-	if value, ok := tuo.mutation.AddedFrom(); ok {
-		_spec.AddField(transaction.FieldFrom, field.TypeInt, value)
-	}
-	if value, ok := tuo.mutation.To(); ok {
-		_spec.SetField(transaction.FieldTo, field.TypeInt, value)
-	}
-	if value, ok := tuo.mutation.AddedTo(); ok {
-		_spec.AddField(transaction.FieldTo, field.TypeInt, value)
-	}
 	if value, ok := tuo.mutation.Amount(); ok {
 		_spec.SetField(transaction.FieldAmount, field.TypeInt, value)
 	}
 	if value, ok := tuo.mutation.AddedAmount(); ok {
 		_spec.AddField(transaction.FieldAmount, field.TypeInt, value)
 	}
-	if value, ok := tuo.mutation.CreatedAt(); ok {
-		_spec.SetField(transaction.FieldCreatedAt, field.TypeTime, value)
+	if tuo.mutation.AccountCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   transaction.AccountTable,
+			Columns: []string{transaction.AccountColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if value, ok := tuo.mutation.UpdatedAt(); ok {
-		_spec.SetField(transaction.FieldUpdatedAt, field.TypeTime, value)
+	if nodes := tuo.mutation.AccountIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   transaction.AccountTable,
+			Columns: []string{transaction.AccountColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Transaction{config: tuo.config}
 	_spec.Assign = _node.assignValues

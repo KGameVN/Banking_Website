@@ -8,10 +8,11 @@ import (
 	"fmt"
 	"math"
 
-	"comb.com/banking/ent/logintoken"
 	"comb.com/banking/ent/predicate"
+	"comb.com/banking/ent/token"
 	"comb.com/banking/ent/user"
 	"comb.com/banking/ent/useraccount"
+	"comb.com/banking/ent/userprofile"
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -21,13 +22,13 @@ import (
 // UserQuery is the builder for querying User entities.
 type UserQuery struct {
 	config
-	ctx             *QueryContext
-	order           []user.OrderOption
-	inters          []Interceptor
-	predicates      []predicate.User
-	withLoginTokens *LoginTokenQuery
-	withAccount     *UserAccountQuery
-	withFKs         bool
+	ctx          *QueryContext
+	order        []user.OrderOption
+	inters       []Interceptor
+	predicates   []predicate.User
+	withAccounts *UserAccountQuery
+	withProfile  *UserProfileQuery
+	withTokens   *TokenQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -64,30 +65,8 @@ func (uq *UserQuery) Order(o ...user.OrderOption) *UserQuery {
 	return uq
 }
 
-// QueryLoginTokens chains the current query on the "login_tokens" edge.
-func (uq *UserQuery) QueryLoginTokens() *LoginTokenQuery {
-	query := (&LoginTokenClient{config: uq.config}).Query()
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := uq.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := uq.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(user.Table, user.FieldID, selector),
-			sqlgraph.To(logintoken.Table, logintoken.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, true, user.LoginTokensTable, user.LoginTokensColumn),
-		)
-		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
-// QueryAccount chains the current query on the "account" edge.
-func (uq *UserQuery) QueryAccount() *UserAccountQuery {
+// QueryAccounts chains the current query on the "accounts" edge.
+func (uq *UserQuery) QueryAccounts() *UserAccountQuery {
 	query := (&UserAccountClient{config: uq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := uq.prepareQuery(ctx); err != nil {
@@ -100,7 +79,51 @@ func (uq *UserQuery) QueryAccount() *UserAccountQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, selector),
 			sqlgraph.To(useraccount.Table, useraccount.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, false, user.AccountTable, user.AccountColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.AccountsTable, user.AccountsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryProfile chains the current query on the "profile" edge.
+func (uq *UserQuery) QueryProfile() *UserProfileQuery {
+	query := (&UserProfileClient{config: uq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(userprofile.Table, userprofile.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, user.ProfileTable, user.ProfileColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryTokens chains the current query on the "tokens" edge.
+func (uq *UserQuery) QueryTokens() *TokenQuery {
+	query := (&TokenClient{config: uq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(token.Table, token.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.TokensTable, user.TokensColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
 		return fromU, nil
@@ -295,38 +318,50 @@ func (uq *UserQuery) Clone() *UserQuery {
 		return nil
 	}
 	return &UserQuery{
-		config:          uq.config,
-		ctx:             uq.ctx.Clone(),
-		order:           append([]user.OrderOption{}, uq.order...),
-		inters:          append([]Interceptor{}, uq.inters...),
-		predicates:      append([]predicate.User{}, uq.predicates...),
-		withLoginTokens: uq.withLoginTokens.Clone(),
-		withAccount:     uq.withAccount.Clone(),
+		config:       uq.config,
+		ctx:          uq.ctx.Clone(),
+		order:        append([]user.OrderOption{}, uq.order...),
+		inters:       append([]Interceptor{}, uq.inters...),
+		predicates:   append([]predicate.User{}, uq.predicates...),
+		withAccounts: uq.withAccounts.Clone(),
+		withProfile:  uq.withProfile.Clone(),
+		withTokens:   uq.withTokens.Clone(),
 		// clone intermediate query.
 		sql:  uq.sql.Clone(),
 		path: uq.path,
 	}
 }
 
-// WithLoginTokens tells the query-builder to eager-load the nodes that are connected to
-// the "login_tokens" edge. The optional arguments are used to configure the query builder of the edge.
-func (uq *UserQuery) WithLoginTokens(opts ...func(*LoginTokenQuery)) *UserQuery {
-	query := (&LoginTokenClient{config: uq.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	uq.withLoginTokens = query
-	return uq
-}
-
-// WithAccount tells the query-builder to eager-load the nodes that are connected to
-// the "account" edge. The optional arguments are used to configure the query builder of the edge.
-func (uq *UserQuery) WithAccount(opts ...func(*UserAccountQuery)) *UserQuery {
+// WithAccounts tells the query-builder to eager-load the nodes that are connected to
+// the "accounts" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithAccounts(opts ...func(*UserAccountQuery)) *UserQuery {
 	query := (&UserAccountClient{config: uq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	uq.withAccount = query
+	uq.withAccounts = query
+	return uq
+}
+
+// WithProfile tells the query-builder to eager-load the nodes that are connected to
+// the "profile" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithProfile(opts ...func(*UserProfileQuery)) *UserQuery {
+	query := (&UserProfileClient{config: uq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	uq.withProfile = query
+	return uq
+}
+
+// WithTokens tells the query-builder to eager-load the nodes that are connected to
+// the "tokens" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithTokens(opts ...func(*TokenQuery)) *UserQuery {
+	query := (&TokenClient{config: uq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	uq.withTokens = query
 	return uq
 }
 
@@ -407,19 +442,13 @@ func (uq *UserQuery) prepareQuery(ctx context.Context) error {
 func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, error) {
 	var (
 		nodes       = []*User{}
-		withFKs     = uq.withFKs
 		_spec       = uq.querySpec()
-		loadedTypes = [2]bool{
-			uq.withLoginTokens != nil,
-			uq.withAccount != nil,
+		loadedTypes = [3]bool{
+			uq.withAccounts != nil,
+			uq.withProfile != nil,
+			uq.withTokens != nil,
 		}
 	)
-	if uq.withLoginTokens != nil {
-		withFKs = true
-	}
-	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, user.ForeignKeys...)
-	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*User).scanValues(nil, columns)
 	}
@@ -438,54 +467,61 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := uq.withLoginTokens; query != nil {
-		if err := uq.loadLoginTokens(ctx, query, nodes, nil,
-			func(n *User, e *LoginToken) { n.Edges.LoginTokens = e }); err != nil {
+	if query := uq.withAccounts; query != nil {
+		if err := uq.loadAccounts(ctx, query, nodes,
+			func(n *User) { n.Edges.Accounts = []*UserAccount{} },
+			func(n *User, e *UserAccount) { n.Edges.Accounts = append(n.Edges.Accounts, e) }); err != nil {
 			return nil, err
 		}
 	}
-	if query := uq.withAccount; query != nil {
-		if err := uq.loadAccount(ctx, query, nodes, nil,
-			func(n *User, e *UserAccount) { n.Edges.Account = e }); err != nil {
+	if query := uq.withProfile; query != nil {
+		if err := uq.loadProfile(ctx, query, nodes, nil,
+			func(n *User, e *UserProfile) { n.Edges.Profile = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := uq.withTokens; query != nil {
+		if err := uq.loadTokens(ctx, query, nodes,
+			func(n *User) { n.Edges.Tokens = []*Token{} },
+			func(n *User, e *Token) { n.Edges.Tokens = append(n.Edges.Tokens, e) }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (uq *UserQuery) loadLoginTokens(ctx context.Context, query *LoginTokenQuery, nodes []*User, init func(*User), assign func(*User, *LoginToken)) error {
-	ids := make([]int, 0, len(nodes))
-	nodeids := make(map[int][]*User)
+func (uq *UserQuery) loadAccounts(ctx context.Context, query *UserAccountQuery, nodes []*User, init func(*User), assign func(*User, *UserAccount)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*User)
 	for i := range nodes {
-		if nodes[i].login_token_user == nil {
-			continue
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
 		}
-		fk := *nodes[i].login_token_user
-		if _, ok := nodeids[fk]; !ok {
-			ids = append(ids, fk)
-		}
-		nodeids[fk] = append(nodeids[fk], nodes[i])
 	}
-	if len(ids) == 0 {
-		return nil
-	}
-	query.Where(logintoken.IDIn(ids...))
+	query.withFKs = true
+	query.Where(predicate.UserAccount(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.AccountsColumn), fks...))
+	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		nodes, ok := nodeids[n.ID]
+		fk := n.user_accounts
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "user_accounts" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "login_token_user" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "user_accounts" returned %v for node %v`, *fk, n.ID)
 		}
-		for i := range nodes {
-			assign(nodes[i], n)
-		}
+		assign(node, n)
 	}
 	return nil
 }
-func (uq *UserQuery) loadAccount(ctx context.Context, query *UserAccountQuery, nodes []*User, init func(*User), assign func(*User, *UserAccount)) error {
+func (uq *UserQuery) loadProfile(ctx context.Context, query *UserProfileQuery, nodes []*User, init func(*User), assign func(*User, *UserProfile)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[int]*User)
 	for i := range nodes {
@@ -493,21 +529,52 @@ func (uq *UserQuery) loadAccount(ctx context.Context, query *UserAccountQuery, n
 		nodeids[nodes[i].ID] = nodes[i]
 	}
 	query.withFKs = true
-	query.Where(predicate.UserAccount(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(user.AccountColumn), fks...))
+	query.Where(predicate.UserProfile(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.ProfileColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.user_account
+		fk := n.user_profile
 		if fk == nil {
-			return fmt.Errorf(`foreign-key "user_account" is nil for node %v`, n.ID)
+			return fmt.Errorf(`foreign-key "user_profile" is nil for node %v`, n.ID)
 		}
 		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "user_account" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "user_profile" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (uq *UserQuery) loadTokens(ctx context.Context, query *TokenQuery, nodes []*User, init func(*User), assign func(*User, *Token)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Token(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.TokensColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.user_tokens
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "user_tokens" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "user_tokens" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}
