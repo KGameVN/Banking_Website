@@ -2,3 +2,4 @@ DROP TABLE IF EXISTS transactions;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS login_tokens;
 DROP TABLE IF EXISTS user_accounts;
+DROP TABLE IF EXISTS user_profile;

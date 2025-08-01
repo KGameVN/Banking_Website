@@ -3,9 +3,8 @@
 package transaction
 
 import (
-	"time"
-
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 const (
@@ -13,31 +12,31 @@ const (
 	Label = "transaction"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldTransactionTime holds the string denoting the transactiontime field in the database.
-	FieldTransactionTime = "transaction_time"
-	// FieldFrom holds the string denoting the from field in the database.
-	FieldFrom = "from"
-	// FieldTo holds the string denoting the to field in the database.
-	FieldTo = "to"
 	// FieldAmount holds the string denoting the amount field in the database.
 	FieldAmount = "amount"
-	// FieldCreatedAt holds the string denoting the created_at field in the database.
-	FieldCreatedAt = "created_at"
-	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
-	FieldUpdatedAt = "updated_at"
+	// EdgeAccount holds the string denoting the account edge name in mutations.
+	EdgeAccount = "account"
 	// Table holds the table name of the transaction in the database.
 	Table = "transactions"
+	// AccountTable is the table that holds the account relation/edge.
+	AccountTable = "transactions"
+	// AccountInverseTable is the table name for the UserAccount entity.
+	// It exists in this package in order to avoid circular dependency with the "useraccount" package.
+	AccountInverseTable = "user_accounts"
+	// AccountColumn is the table column denoting the account relation/edge.
+	AccountColumn = "user_account_transactions"
 )
 
 // Columns holds all SQL columns for transaction fields.
 var Columns = []string{
 	FieldID,
-	FieldTransactionTime,
-	FieldFrom,
-	FieldTo,
 	FieldAmount,
-	FieldCreatedAt,
-	FieldUpdatedAt,
+}
+
+// ForeignKeys holds the SQL foreign-keys that are owned by the "transactions"
+// table and are not defined as standalone fields in the schema.
+var ForeignKeys = []string{
+	"user_account_transactions",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -47,19 +46,13 @@ func ValidColumn(column string) bool {
 			return true
 		}
 	}
+	for i := range ForeignKeys {
+		if column == ForeignKeys[i] {
+			return true
+		}
+	}
 	return false
 }
-
-var (
-	// DefaultTransactionTime holds the default value on creation for the "TransactionTime" field.
-	DefaultTransactionTime func() time.Time
-	// DefaultCreatedAt holds the default value on creation for the "created_at" field.
-	DefaultCreatedAt func() time.Time
-	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
-	DefaultUpdatedAt func() time.Time
-	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
-	UpdateDefaultUpdatedAt func() time.Time
-)
 
 // OrderOption defines the ordering options for the Transaction queries.
 type OrderOption func(*sql.Selector)
@@ -69,32 +62,21 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByTransactionTime orders the results by the TransactionTime field.
-func ByTransactionTime(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldTransactionTime, opts...).ToFunc()
-}
-
-// ByFrom orders the results by the From field.
-func ByFrom(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldFrom, opts...).ToFunc()
-}
-
-// ByTo orders the results by the To field.
-func ByTo(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldTo, opts...).ToFunc()
-}
-
-// ByAmount orders the results by the Amount field.
+// ByAmount orders the results by the amount field.
 func ByAmount(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldAmount, opts...).ToFunc()
 }
 
-// ByCreatedAt orders the results by the created_at field.
-func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldCreatedAt, opts...).ToFunc()
+// ByAccountField orders the results by account field.
+func ByAccountField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newAccountStep(), sql.OrderByField(field, opts...))
+	}
 }
-
-// ByUpdatedAt orders the results by the updated_at field.
-func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
+func newAccountStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(AccountInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, AccountTable, AccountColumn),
+	)
 }

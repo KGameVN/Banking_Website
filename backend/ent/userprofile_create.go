@@ -6,8 +6,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
+	"comb.com/banking/ent/user"
 	"comb.com/banking/ent/userprofile"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -32,12 +32,6 @@ func (upc *UserProfileCreate) SetLastname(s string) *UserProfileCreate {
 	return upc
 }
 
-// SetCmnd sets the "cmnd" field.
-func (upc *UserProfileCreate) SetCmnd(s string) *UserProfileCreate {
-	upc.mutation.SetCmnd(s)
-	return upc
-}
-
 // SetAddress sets the "address" field.
 func (upc *UserProfileCreate) SetAddress(s string) *UserProfileCreate {
 	upc.mutation.SetAddress(s)
@@ -45,16 +39,8 @@ func (upc *UserProfileCreate) SetAddress(s string) *UserProfileCreate {
 }
 
 // SetGender sets the "gender" field.
-func (upc *UserProfileCreate) SetGender(b bool) *UserProfileCreate {
-	upc.mutation.SetGender(b)
-	return upc
-}
-
-// SetNillableGender sets the "gender" field if the given value is not nil.
-func (upc *UserProfileCreate) SetNillableGender(b *bool) *UserProfileCreate {
-	if b != nil {
-		upc.SetGender(*b)
-	}
+func (upc *UserProfileCreate) SetGender(s string) *UserProfileCreate {
+	upc.mutation.SetGender(s)
 	return upc
 }
 
@@ -64,32 +50,23 @@ func (upc *UserProfileCreate) SetBirthday(s string) *UserProfileCreate {
 	return upc
 }
 
-// SetCreatedAt sets the "created_at" field.
-func (upc *UserProfileCreate) SetCreatedAt(t time.Time) *UserProfileCreate {
-	upc.mutation.SetCreatedAt(t)
+// SetUserID sets the "user" edge to the User entity by ID.
+func (upc *UserProfileCreate) SetUserID(id int) *UserProfileCreate {
+	upc.mutation.SetUserID(id)
 	return upc
 }
 
-// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (upc *UserProfileCreate) SetNillableCreatedAt(t *time.Time) *UserProfileCreate {
-	if t != nil {
-		upc.SetCreatedAt(*t)
+// SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
+func (upc *UserProfileCreate) SetNillableUserID(id *int) *UserProfileCreate {
+	if id != nil {
+		upc = upc.SetUserID(*id)
 	}
 	return upc
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (upc *UserProfileCreate) SetUpdatedAt(t time.Time) *UserProfileCreate {
-	upc.mutation.SetUpdatedAt(t)
-	return upc
-}
-
-// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (upc *UserProfileCreate) SetNillableUpdatedAt(t *time.Time) *UserProfileCreate {
-	if t != nil {
-		upc.SetUpdatedAt(*t)
-	}
-	return upc
+// SetUser sets the "user" edge to the User entity.
+func (upc *UserProfileCreate) SetUser(u *User) *UserProfileCreate {
+	return upc.SetUserID(u.ID)
 }
 
 // Mutation returns the UserProfileMutation object of the builder.
@@ -99,7 +76,6 @@ func (upc *UserProfileCreate) Mutation() *UserProfileMutation {
 
 // Save creates the UserProfile in the database.
 func (upc *UserProfileCreate) Save(ctx context.Context) (*UserProfile, error) {
-	upc.defaults()
 	return withHooks(ctx, upc.sqlSave, upc.mutation, upc.hooks)
 }
 
@@ -125,72 +101,22 @@ func (upc *UserProfileCreate) ExecX(ctx context.Context) {
 	}
 }
 
-// defaults sets the default values of the builder before save.
-func (upc *UserProfileCreate) defaults() {
-	if _, ok := upc.mutation.Gender(); !ok {
-		v := userprofile.DefaultGender
-		upc.mutation.SetGender(v)
-	}
-	if _, ok := upc.mutation.CreatedAt(); !ok {
-		v := userprofile.DefaultCreatedAt()
-		upc.mutation.SetCreatedAt(v)
-	}
-	if _, ok := upc.mutation.UpdatedAt(); !ok {
-		v := userprofile.DefaultUpdatedAt()
-		upc.mutation.SetUpdatedAt(v)
-	}
-}
-
 // check runs all checks and user-defined validators on the builder.
 func (upc *UserProfileCreate) check() error {
 	if _, ok := upc.mutation.Firstname(); !ok {
 		return &ValidationError{Name: "firstname", err: errors.New(`ent: missing required field "UserProfile.firstname"`)}
 	}
-	if v, ok := upc.mutation.Firstname(); ok {
-		if err := userprofile.FirstnameValidator(v); err != nil {
-			return &ValidationError{Name: "firstname", err: fmt.Errorf(`ent: validator failed for field "UserProfile.firstname": %w`, err)}
-		}
-	}
 	if _, ok := upc.mutation.Lastname(); !ok {
 		return &ValidationError{Name: "lastname", err: errors.New(`ent: missing required field "UserProfile.lastname"`)}
 	}
-	if v, ok := upc.mutation.Lastname(); ok {
-		if err := userprofile.LastnameValidator(v); err != nil {
-			return &ValidationError{Name: "lastname", err: fmt.Errorf(`ent: validator failed for field "UserProfile.lastname": %w`, err)}
-		}
-	}
-	if _, ok := upc.mutation.Cmnd(); !ok {
-		return &ValidationError{Name: "cmnd", err: errors.New(`ent: missing required field "UserProfile.cmnd"`)}
-	}
-	if v, ok := upc.mutation.Cmnd(); ok {
-		if err := userprofile.CmndValidator(v); err != nil {
-			return &ValidationError{Name: "cmnd", err: fmt.Errorf(`ent: validator failed for field "UserProfile.cmnd": %w`, err)}
-		}
-	}
 	if _, ok := upc.mutation.Address(); !ok {
 		return &ValidationError{Name: "address", err: errors.New(`ent: missing required field "UserProfile.address"`)}
-	}
-	if v, ok := upc.mutation.Address(); ok {
-		if err := userprofile.AddressValidator(v); err != nil {
-			return &ValidationError{Name: "address", err: fmt.Errorf(`ent: validator failed for field "UserProfile.address": %w`, err)}
-		}
 	}
 	if _, ok := upc.mutation.Gender(); !ok {
 		return &ValidationError{Name: "gender", err: errors.New(`ent: missing required field "UserProfile.gender"`)}
 	}
 	if _, ok := upc.mutation.Birthday(); !ok {
 		return &ValidationError{Name: "birthday", err: errors.New(`ent: missing required field "UserProfile.birthday"`)}
-	}
-	if v, ok := upc.mutation.Birthday(); ok {
-		if err := userprofile.BirthdayValidator(v); err != nil {
-			return &ValidationError{Name: "birthday", err: fmt.Errorf(`ent: validator failed for field "UserProfile.birthday": %w`, err)}
-		}
-	}
-	if _, ok := upc.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "UserProfile.created_at"`)}
-	}
-	if _, ok := upc.mutation.UpdatedAt(); !ok {
-		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "UserProfile.updated_at"`)}
 	}
 	return nil
 }
@@ -226,29 +152,34 @@ func (upc *UserProfileCreate) createSpec() (*UserProfile, *sqlgraph.CreateSpec) 
 		_spec.SetField(userprofile.FieldLastname, field.TypeString, value)
 		_node.Lastname = value
 	}
-	if value, ok := upc.mutation.Cmnd(); ok {
-		_spec.SetField(userprofile.FieldCmnd, field.TypeString, value)
-		_node.Cmnd = value
-	}
 	if value, ok := upc.mutation.Address(); ok {
 		_spec.SetField(userprofile.FieldAddress, field.TypeString, value)
 		_node.Address = value
 	}
 	if value, ok := upc.mutation.Gender(); ok {
-		_spec.SetField(userprofile.FieldGender, field.TypeBool, value)
+		_spec.SetField(userprofile.FieldGender, field.TypeString, value)
 		_node.Gender = value
 	}
 	if value, ok := upc.mutation.Birthday(); ok {
 		_spec.SetField(userprofile.FieldBirthday, field.TypeString, value)
 		_node.Birthday = value
 	}
-	if value, ok := upc.mutation.CreatedAt(); ok {
-		_spec.SetField(userprofile.FieldCreatedAt, field.TypeTime, value)
-		_node.CreatedAt = value
-	}
-	if value, ok := upc.mutation.UpdatedAt(); ok {
-		_spec.SetField(userprofile.FieldUpdatedAt, field.TypeTime, value)
-		_node.UpdatedAt = value
+	if nodes := upc.mutation.UserIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
+			Table:   userprofile.UserTable,
+			Columns: []string{userprofile.UserColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.user_profile = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }
@@ -271,7 +202,6 @@ func (upcb *UserProfileCreateBulk) Save(ctx context.Context) ([]*UserProfile, er
 	for i := range upcb.builders {
 		func(i int, root context.Context) {
 			builder := upcb.builders[i]
-			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*UserProfileMutation)
 				if !ok {

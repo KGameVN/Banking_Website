@@ -13,7 +13,7 @@ CREATE TABLE users (
 CREATE TABLE user_accounts (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-    account_number VARCHAR(20) UNIQUE NOT NULL,
+    account_number BIGINT UNIQUE NOT NULL,
     balance NUMERIC(18,2) DEFAULT 0.00,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -75,9 +75,9 @@ INSERT INTO user_accounts (
     1000
 );
 
---Transaction
--- SQL tạo bảng `transactions` trong PostgreSQL
-CREATE TABLE transactions (
+--Transfer
+-- SQL tạo bảng `transfer` trong PostgreSQL
+CREATE TABLE transfer (
     id BIGSERIAL PRIMARY KEY,      -- ID tự tăng (mặc định cho `bigserial`)
     "TransactionTime" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,  -- Thời gian giao dịch
     "From" BIGINT NOT NULL,        -- ID tài khoản người gửi
@@ -85,8 +85,20 @@ CREATE TABLE transactions (
     "Amount" BIGINT NOT NULL,      -- Số tiền giao dịch
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,     -- Thời gian tạo giao dịch
     "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,     -- Thời gian cập nhật giao dịch
-    CONSTRAINT fk_from_account FOREIGN KEY ("From") REFERENCES user_accounts(id) ON DELETE CASCADE,
-    CONSTRAINT fk_to_account FOREIGN KEY ("To") REFERENCES user_accounts(id) ON DELETE CASCADE
+    CONSTRAINT fk_from_account FOREIGN KEY ("From") REFERENCES user_accounts(account_number) ON DELETE CASCADE,
+    CONSTRAINT fk_to_account FOREIGN KEY ("To") REFERENCES user_accounts(account_number) ON DELETE CASCADE
+);
+
+--Transaction
+-- SQL tạo bảng `transaction` trong PostgreSQL
+CREATE TABLE transaction (
+    id BIGSERIAL PRIMARY KEY,      -- ID tự tăng (mặc định cho `bigserial`)
+    "TransactionTime" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,  -- Thời gian giao dịch
+    "Amount" BIGINT NOT NULL,      -- Số tiền giao dịch
+    account_number BIGINT UNIQUE NOT NULL,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,     -- Thời gian tạo giao dịch
+    "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,     -- Thời gian cập nhật giao dịch
+    CONSTRAINT fk_transaction_account FOREIGN KEY (account_number) REFERENCES user_accounts(account_number) ON DELETE CASCADE
 );
 
 --Token

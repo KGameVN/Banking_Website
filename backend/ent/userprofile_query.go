@@ -8,6 +8,7 @@ import (
 	"math"
 
 	"comb.com/banking/ent/predicate"
+	"comb.com/banking/ent/user"
 	"comb.com/banking/ent/userprofile"
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -22,6 +23,8 @@ type UserProfileQuery struct {
 	order      []userprofile.OrderOption
 	inters     []Interceptor
 	predicates []predicate.UserProfile
+	withUser   *UserQuery
+	withFKs    bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -56,6 +59,28 @@ func (upq *UserProfileQuery) Unique(unique bool) *UserProfileQuery {
 func (upq *UserProfileQuery) Order(o ...userprofile.OrderOption) *UserProfileQuery {
 	upq.order = append(upq.order, o...)
 	return upq
+}
+
+// QueryUser chains the current query on the "user" edge.
+func (upq *UserProfileQuery) QueryUser() *UserQuery {
+	query := (&UserClient{config: upq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := upq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := upq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(userprofile.Table, userprofile.FieldID, selector),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, true, userprofile.UserTable, userprofile.UserColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(upq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first UserProfile entity from the query.
@@ -250,10 +275,22 @@ func (upq *UserProfileQuery) Clone() *UserProfileQuery {
 		order:      append([]userprofile.OrderOption{}, upq.order...),
 		inters:     append([]Interceptor{}, upq.inters...),
 		predicates: append([]predicate.UserProfile{}, upq.predicates...),
+		withUser:   upq.withUser.Clone(),
 		// clone intermediate query.
 		sql:  upq.sql.Clone(),
 		path: upq.path,
 	}
+}
+
+// WithUser tells the query-builder to eager-load the nodes that are connected to
+// the "user" edge. The optional arguments are used to configure the query builder of the edge.
+func (upq *UserProfileQuery) WithUser(opts ...func(*UserQuery)) *UserProfileQuery {
+	query := (&UserClient{config: upq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	upq.withUser = query
+	return upq
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -332,15 +369,26 @@ func (upq *UserProfileQuery) prepareQuery(ctx context.Context) error {
 
 func (upq *UserProfileQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*UserProfile, error) {
 	var (
-		nodes = []*UserProfile{}
-		_spec = upq.querySpec()
+		nodes       = []*UserProfile{}
+		withFKs     = upq.withFKs
+		_spec       = upq.querySpec()
+		loadedTypes = [1]bool{
+			upq.withUser != nil,
+		}
 	)
+	if upq.withUser != nil {
+		withFKs = true
+	}
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, userprofile.ForeignKeys...)
+	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*UserProfile).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &UserProfile{config: upq.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -352,7 +400,46 @@ func (upq *UserProfileQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := upq.withUser; query != nil {
+		if err := upq.loadUser(ctx, query, nodes, nil,
+			func(n *UserProfile, e *User) { n.Edges.User = e }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
+}
+
+func (upq *UserProfileQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*UserProfile, init func(*UserProfile), assign func(*UserProfile, *User)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*UserProfile)
+	for i := range nodes {
+		if nodes[i].user_profile == nil {
+			continue
+		}
+		fk := *nodes[i].user_profile
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(user.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "user_profile" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
 }
 
 func (upq *UserProfileQuery) sqlCount(ctx context.Context) (int, error) {

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter} from "next/navigation";
-import  Image  from "next/image";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function Login() {
   const [open, setOpen] = useState(false);
@@ -27,6 +27,7 @@ export default function Login() {
 
       if (res.ok) {
         console.log("Login success:", data);
+        localStorage.setItem("accountNumber", data.user.accountnumber) // stored account number in local storage
         setOpen(false);
         router.push("/dashboard");
       } else {

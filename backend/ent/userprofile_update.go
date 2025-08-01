@@ -6,9 +6,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"comb.com/banking/ent/predicate"
+	"comb.com/banking/ent/user"
 	"comb.com/banking/ent/userprofile"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -56,20 +56,6 @@ func (upu *UserProfileUpdate) SetNillableLastname(s *string) *UserProfileUpdate 
 	return upu
 }
 
-// SetCmnd sets the "cmnd" field.
-func (upu *UserProfileUpdate) SetCmnd(s string) *UserProfileUpdate {
-	upu.mutation.SetCmnd(s)
-	return upu
-}
-
-// SetNillableCmnd sets the "cmnd" field if the given value is not nil.
-func (upu *UserProfileUpdate) SetNillableCmnd(s *string) *UserProfileUpdate {
-	if s != nil {
-		upu.SetCmnd(*s)
-	}
-	return upu
-}
-
 // SetAddress sets the "address" field.
 func (upu *UserProfileUpdate) SetAddress(s string) *UserProfileUpdate {
 	upu.mutation.SetAddress(s)
@@ -85,15 +71,15 @@ func (upu *UserProfileUpdate) SetNillableAddress(s *string) *UserProfileUpdate {
 }
 
 // SetGender sets the "gender" field.
-func (upu *UserProfileUpdate) SetGender(b bool) *UserProfileUpdate {
-	upu.mutation.SetGender(b)
+func (upu *UserProfileUpdate) SetGender(s string) *UserProfileUpdate {
+	upu.mutation.SetGender(s)
 	return upu
 }
 
 // SetNillableGender sets the "gender" field if the given value is not nil.
-func (upu *UserProfileUpdate) SetNillableGender(b *bool) *UserProfileUpdate {
-	if b != nil {
-		upu.SetGender(*b)
+func (upu *UserProfileUpdate) SetNillableGender(s *string) *UserProfileUpdate {
+	if s != nil {
+		upu.SetGender(*s)
 	}
 	return upu
 }
@@ -112,24 +98,23 @@ func (upu *UserProfileUpdate) SetNillableBirthday(s *string) *UserProfileUpdate 
 	return upu
 }
 
-// SetCreatedAt sets the "created_at" field.
-func (upu *UserProfileUpdate) SetCreatedAt(t time.Time) *UserProfileUpdate {
-	upu.mutation.SetCreatedAt(t)
+// SetUserID sets the "user" edge to the User entity by ID.
+func (upu *UserProfileUpdate) SetUserID(id int) *UserProfileUpdate {
+	upu.mutation.SetUserID(id)
 	return upu
 }
 
-// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (upu *UserProfileUpdate) SetNillableCreatedAt(t *time.Time) *UserProfileUpdate {
-	if t != nil {
-		upu.SetCreatedAt(*t)
+// SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
+func (upu *UserProfileUpdate) SetNillableUserID(id *int) *UserProfileUpdate {
+	if id != nil {
+		upu = upu.SetUserID(*id)
 	}
 	return upu
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (upu *UserProfileUpdate) SetUpdatedAt(t time.Time) *UserProfileUpdate {
-	upu.mutation.SetUpdatedAt(t)
-	return upu
+// SetUser sets the "user" edge to the User entity.
+func (upu *UserProfileUpdate) SetUser(u *User) *UserProfileUpdate {
+	return upu.SetUserID(u.ID)
 }
 
 // Mutation returns the UserProfileMutation object of the builder.
@@ -137,9 +122,14 @@ func (upu *UserProfileUpdate) Mutation() *UserProfileMutation {
 	return upu.mutation
 }
 
+// ClearUser clears the "user" edge to the User entity.
+func (upu *UserProfileUpdate) ClearUser() *UserProfileUpdate {
+	upu.mutation.ClearUser()
+	return upu
+}
+
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (upu *UserProfileUpdate) Save(ctx context.Context) (int, error) {
-	upu.defaults()
 	return withHooks(ctx, upu.sqlSave, upu.mutation, upu.hooks)
 }
 
@@ -165,48 +155,7 @@ func (upu *UserProfileUpdate) ExecX(ctx context.Context) {
 	}
 }
 
-// defaults sets the default values of the builder before save.
-func (upu *UserProfileUpdate) defaults() {
-	if _, ok := upu.mutation.UpdatedAt(); !ok {
-		v := userprofile.UpdateDefaultUpdatedAt()
-		upu.mutation.SetUpdatedAt(v)
-	}
-}
-
-// check runs all checks and user-defined validators on the builder.
-func (upu *UserProfileUpdate) check() error {
-	if v, ok := upu.mutation.Firstname(); ok {
-		if err := userprofile.FirstnameValidator(v); err != nil {
-			return &ValidationError{Name: "firstname", err: fmt.Errorf(`ent: validator failed for field "UserProfile.firstname": %w`, err)}
-		}
-	}
-	if v, ok := upu.mutation.Lastname(); ok {
-		if err := userprofile.LastnameValidator(v); err != nil {
-			return &ValidationError{Name: "lastname", err: fmt.Errorf(`ent: validator failed for field "UserProfile.lastname": %w`, err)}
-		}
-	}
-	if v, ok := upu.mutation.Cmnd(); ok {
-		if err := userprofile.CmndValidator(v); err != nil {
-			return &ValidationError{Name: "cmnd", err: fmt.Errorf(`ent: validator failed for field "UserProfile.cmnd": %w`, err)}
-		}
-	}
-	if v, ok := upu.mutation.Address(); ok {
-		if err := userprofile.AddressValidator(v); err != nil {
-			return &ValidationError{Name: "address", err: fmt.Errorf(`ent: validator failed for field "UserProfile.address": %w`, err)}
-		}
-	}
-	if v, ok := upu.mutation.Birthday(); ok {
-		if err := userprofile.BirthdayValidator(v); err != nil {
-			return &ValidationError{Name: "birthday", err: fmt.Errorf(`ent: validator failed for field "UserProfile.birthday": %w`, err)}
-		}
-	}
-	return nil
-}
-
 func (upu *UserProfileUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	if err := upu.check(); err != nil {
-		return n, err
-	}
 	_spec := sqlgraph.NewUpdateSpec(userprofile.Table, userprofile.Columns, sqlgraph.NewFieldSpec(userprofile.FieldID, field.TypeInt))
 	if ps := upu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -221,23 +170,43 @@ func (upu *UserProfileUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := upu.mutation.Lastname(); ok {
 		_spec.SetField(userprofile.FieldLastname, field.TypeString, value)
 	}
-	if value, ok := upu.mutation.Cmnd(); ok {
-		_spec.SetField(userprofile.FieldCmnd, field.TypeString, value)
-	}
 	if value, ok := upu.mutation.Address(); ok {
 		_spec.SetField(userprofile.FieldAddress, field.TypeString, value)
 	}
 	if value, ok := upu.mutation.Gender(); ok {
-		_spec.SetField(userprofile.FieldGender, field.TypeBool, value)
+		_spec.SetField(userprofile.FieldGender, field.TypeString, value)
 	}
 	if value, ok := upu.mutation.Birthday(); ok {
 		_spec.SetField(userprofile.FieldBirthday, field.TypeString, value)
 	}
-	if value, ok := upu.mutation.CreatedAt(); ok {
-		_spec.SetField(userprofile.FieldCreatedAt, field.TypeTime, value)
+	if upu.mutation.UserCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
+			Table:   userprofile.UserTable,
+			Columns: []string{userprofile.UserColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if value, ok := upu.mutation.UpdatedAt(); ok {
-		_spec.SetField(userprofile.FieldUpdatedAt, field.TypeTime, value)
+	if nodes := upu.mutation.UserIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
+			Table:   userprofile.UserTable,
+			Columns: []string{userprofile.UserColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, upu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -287,20 +256,6 @@ func (upuo *UserProfileUpdateOne) SetNillableLastname(s *string) *UserProfileUpd
 	return upuo
 }
 
-// SetCmnd sets the "cmnd" field.
-func (upuo *UserProfileUpdateOne) SetCmnd(s string) *UserProfileUpdateOne {
-	upuo.mutation.SetCmnd(s)
-	return upuo
-}
-
-// SetNillableCmnd sets the "cmnd" field if the given value is not nil.
-func (upuo *UserProfileUpdateOne) SetNillableCmnd(s *string) *UserProfileUpdateOne {
-	if s != nil {
-		upuo.SetCmnd(*s)
-	}
-	return upuo
-}
-
 // SetAddress sets the "address" field.
 func (upuo *UserProfileUpdateOne) SetAddress(s string) *UserProfileUpdateOne {
 	upuo.mutation.SetAddress(s)
@@ -316,15 +271,15 @@ func (upuo *UserProfileUpdateOne) SetNillableAddress(s *string) *UserProfileUpda
 }
 
 // SetGender sets the "gender" field.
-func (upuo *UserProfileUpdateOne) SetGender(b bool) *UserProfileUpdateOne {
-	upuo.mutation.SetGender(b)
+func (upuo *UserProfileUpdateOne) SetGender(s string) *UserProfileUpdateOne {
+	upuo.mutation.SetGender(s)
 	return upuo
 }
 
 // SetNillableGender sets the "gender" field if the given value is not nil.
-func (upuo *UserProfileUpdateOne) SetNillableGender(b *bool) *UserProfileUpdateOne {
-	if b != nil {
-		upuo.SetGender(*b)
+func (upuo *UserProfileUpdateOne) SetNillableGender(s *string) *UserProfileUpdateOne {
+	if s != nil {
+		upuo.SetGender(*s)
 	}
 	return upuo
 }
@@ -343,29 +298,34 @@ func (upuo *UserProfileUpdateOne) SetNillableBirthday(s *string) *UserProfileUpd
 	return upuo
 }
 
-// SetCreatedAt sets the "created_at" field.
-func (upuo *UserProfileUpdateOne) SetCreatedAt(t time.Time) *UserProfileUpdateOne {
-	upuo.mutation.SetCreatedAt(t)
+// SetUserID sets the "user" edge to the User entity by ID.
+func (upuo *UserProfileUpdateOne) SetUserID(id int) *UserProfileUpdateOne {
+	upuo.mutation.SetUserID(id)
 	return upuo
 }
 
-// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (upuo *UserProfileUpdateOne) SetNillableCreatedAt(t *time.Time) *UserProfileUpdateOne {
-	if t != nil {
-		upuo.SetCreatedAt(*t)
+// SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
+func (upuo *UserProfileUpdateOne) SetNillableUserID(id *int) *UserProfileUpdateOne {
+	if id != nil {
+		upuo = upuo.SetUserID(*id)
 	}
 	return upuo
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (upuo *UserProfileUpdateOne) SetUpdatedAt(t time.Time) *UserProfileUpdateOne {
-	upuo.mutation.SetUpdatedAt(t)
-	return upuo
+// SetUser sets the "user" edge to the User entity.
+func (upuo *UserProfileUpdateOne) SetUser(u *User) *UserProfileUpdateOne {
+	return upuo.SetUserID(u.ID)
 }
 
 // Mutation returns the UserProfileMutation object of the builder.
 func (upuo *UserProfileUpdateOne) Mutation() *UserProfileMutation {
 	return upuo.mutation
+}
+
+// ClearUser clears the "user" edge to the User entity.
+func (upuo *UserProfileUpdateOne) ClearUser() *UserProfileUpdateOne {
+	upuo.mutation.ClearUser()
+	return upuo
 }
 
 // Where appends a list predicates to the UserProfileUpdate builder.
@@ -383,7 +343,6 @@ func (upuo *UserProfileUpdateOne) Select(field string, fields ...string) *UserPr
 
 // Save executes the query and returns the updated UserProfile entity.
 func (upuo *UserProfileUpdateOne) Save(ctx context.Context) (*UserProfile, error) {
-	upuo.defaults()
 	return withHooks(ctx, upuo.sqlSave, upuo.mutation, upuo.hooks)
 }
 
@@ -409,48 +368,7 @@ func (upuo *UserProfileUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
-// defaults sets the default values of the builder before save.
-func (upuo *UserProfileUpdateOne) defaults() {
-	if _, ok := upuo.mutation.UpdatedAt(); !ok {
-		v := userprofile.UpdateDefaultUpdatedAt()
-		upuo.mutation.SetUpdatedAt(v)
-	}
-}
-
-// check runs all checks and user-defined validators on the builder.
-func (upuo *UserProfileUpdateOne) check() error {
-	if v, ok := upuo.mutation.Firstname(); ok {
-		if err := userprofile.FirstnameValidator(v); err != nil {
-			return &ValidationError{Name: "firstname", err: fmt.Errorf(`ent: validator failed for field "UserProfile.firstname": %w`, err)}
-		}
-	}
-	if v, ok := upuo.mutation.Lastname(); ok {
-		if err := userprofile.LastnameValidator(v); err != nil {
-			return &ValidationError{Name: "lastname", err: fmt.Errorf(`ent: validator failed for field "UserProfile.lastname": %w`, err)}
-		}
-	}
-	if v, ok := upuo.mutation.Cmnd(); ok {
-		if err := userprofile.CmndValidator(v); err != nil {
-			return &ValidationError{Name: "cmnd", err: fmt.Errorf(`ent: validator failed for field "UserProfile.cmnd": %w`, err)}
-		}
-	}
-	if v, ok := upuo.mutation.Address(); ok {
-		if err := userprofile.AddressValidator(v); err != nil {
-			return &ValidationError{Name: "address", err: fmt.Errorf(`ent: validator failed for field "UserProfile.address": %w`, err)}
-		}
-	}
-	if v, ok := upuo.mutation.Birthday(); ok {
-		if err := userprofile.BirthdayValidator(v); err != nil {
-			return &ValidationError{Name: "birthday", err: fmt.Errorf(`ent: validator failed for field "UserProfile.birthday": %w`, err)}
-		}
-	}
-	return nil
-}
-
 func (upuo *UserProfileUpdateOne) sqlSave(ctx context.Context) (_node *UserProfile, err error) {
-	if err := upuo.check(); err != nil {
-		return _node, err
-	}
 	_spec := sqlgraph.NewUpdateSpec(userprofile.Table, userprofile.Columns, sqlgraph.NewFieldSpec(userprofile.FieldID, field.TypeInt))
 	id, ok := upuo.mutation.ID()
 	if !ok {
@@ -482,23 +400,43 @@ func (upuo *UserProfileUpdateOne) sqlSave(ctx context.Context) (_node *UserProfi
 	if value, ok := upuo.mutation.Lastname(); ok {
 		_spec.SetField(userprofile.FieldLastname, field.TypeString, value)
 	}
-	if value, ok := upuo.mutation.Cmnd(); ok {
-		_spec.SetField(userprofile.FieldCmnd, field.TypeString, value)
-	}
 	if value, ok := upuo.mutation.Address(); ok {
 		_spec.SetField(userprofile.FieldAddress, field.TypeString, value)
 	}
 	if value, ok := upuo.mutation.Gender(); ok {
-		_spec.SetField(userprofile.FieldGender, field.TypeBool, value)
+		_spec.SetField(userprofile.FieldGender, field.TypeString, value)
 	}
 	if value, ok := upuo.mutation.Birthday(); ok {
 		_spec.SetField(userprofile.FieldBirthday, field.TypeString, value)
 	}
-	if value, ok := upuo.mutation.CreatedAt(); ok {
-		_spec.SetField(userprofile.FieldCreatedAt, field.TypeTime, value)
+	if upuo.mutation.UserCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
+			Table:   userprofile.UserTable,
+			Columns: []string{userprofile.UserColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if value, ok := upuo.mutation.UpdatedAt(); ok {
-		_spec.SetField(userprofile.FieldUpdatedAt, field.TypeTime, value)
+	if nodes := upuo.mutation.UserIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
+			Table:   userprofile.UserTable,
+			Columns: []string{userprofile.UserColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &UserProfile{config: upuo.config}
 	_spec.Assign = _node.assignValues

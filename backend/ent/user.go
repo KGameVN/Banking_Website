@@ -5,11 +5,9 @@ package ent
 import (
 	"fmt"
 	"strings"
-	"time"
 
-	"comb.com/banking/ent/logintoken"
 	"comb.com/banking/ent/user"
-	"comb.com/banking/ent/useraccount"
+	"comb.com/banking/ent/userprofile"
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 )
@@ -25,48 +23,54 @@ type User struct {
 	Email string `json:"email,omitempty"`
 	// Password holds the value of the "password" field.
 	Password string `json:"password,omitempty"`
-	// CreatedAt holds the value of the "created_at" field.
-	CreatedAt time.Time `json:"created_at,omitempty"`
-	// UpdatedAt holds the value of the "updated_at" field.
-	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// AccountNumber holds the value of the "account_number" field.
+	AccountNumber int64 `json:"account_number,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UserQuery when eager-loading is set.
-	Edges            UserEdges `json:"edges"`
-	login_token_user *int
-	selectValues     sql.SelectValues
+	Edges        UserEdges `json:"edges"`
+	selectValues sql.SelectValues
 }
 
 // UserEdges holds the relations/edges for other nodes in the graph.
 type UserEdges struct {
-	// LoginTokens holds the value of the login_tokens edge.
-	LoginTokens *LoginToken `json:"login_tokens,omitempty"`
-	// Account holds the value of the account edge.
-	Account *UserAccount `json:"account,omitempty"`
+	// Accounts holds the value of the accounts edge.
+	Accounts []*UserAccount `json:"accounts,omitempty"`
+	// Profile holds the value of the profile edge.
+	Profile *UserProfile `json:"profile,omitempty"`
+	// Tokens holds the value of the tokens edge.
+	Tokens []*Token `json:"tokens,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
-// LoginTokensOrErr returns the LoginTokens value or an error if the edge
-// was not loaded in eager-loading, or loaded but was not found.
-func (e UserEdges) LoginTokensOrErr() (*LoginToken, error) {
-	if e.LoginTokens != nil {
-		return e.LoginTokens, nil
-	} else if e.loadedTypes[0] {
-		return nil, &NotFoundError{label: logintoken.Label}
+// AccountsOrErr returns the Accounts value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) AccountsOrErr() ([]*UserAccount, error) {
+	if e.loadedTypes[0] {
+		return e.Accounts, nil
 	}
-	return nil, &NotLoadedError{edge: "login_tokens"}
+	return nil, &NotLoadedError{edge: "accounts"}
 }
 
-// AccountOrErr returns the Account value or an error if the edge
+// ProfileOrErr returns the Profile value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
-func (e UserEdges) AccountOrErr() (*UserAccount, error) {
-	if e.Account != nil {
-		return e.Account, nil
+func (e UserEdges) ProfileOrErr() (*UserProfile, error) {
+	if e.Profile != nil {
+		return e.Profile, nil
 	} else if e.loadedTypes[1] {
-		return nil, &NotFoundError{label: useraccount.Label}
+		return nil, &NotFoundError{label: userprofile.Label}
 	}
-	return nil, &NotLoadedError{edge: "account"}
+	return nil, &NotLoadedError{edge: "profile"}
+}
+
+// TokensOrErr returns the Tokens value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) TokensOrErr() ([]*Token, error) {
+	if e.loadedTypes[2] {
+		return e.Tokens, nil
+	}
+	return nil, &NotLoadedError{edge: "tokens"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -74,14 +78,10 @@ func (*User) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case user.FieldID:
+		case user.FieldID, user.FieldAccountNumber:
 			values[i] = new(sql.NullInt64)
 		case user.FieldUsername, user.FieldEmail, user.FieldPassword:
 			values[i] = new(sql.NullString)
-		case user.FieldCreatedAt, user.FieldUpdatedAt:
-			values[i] = new(sql.NullTime)
-		case user.ForeignKeys[0]: // login_token_user
-			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -121,24 +121,11 @@ func (u *User) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				u.Password = value.String
 			}
-		case user.FieldCreatedAt:
-			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field created_at", values[i])
-			} else if value.Valid {
-				u.CreatedAt = value.Time
-			}
-		case user.FieldUpdatedAt:
-			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
-			} else if value.Valid {
-				u.UpdatedAt = value.Time
-			}
-		case user.ForeignKeys[0]:
+		case user.FieldAccountNumber:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field login_token_user", value)
+				return fmt.Errorf("unexpected type %T for field account_number", values[i])
 			} else if value.Valid {
-				u.login_token_user = new(int)
-				*u.login_token_user = int(value.Int64)
+				u.AccountNumber = value.Int64
 			}
 		default:
 			u.selectValues.Set(columns[i], values[i])
@@ -153,14 +140,19 @@ func (u *User) Value(name string) (ent.Value, error) {
 	return u.selectValues.Get(name)
 }
 
-// QueryLoginTokens queries the "login_tokens" edge of the User entity.
-func (u *User) QueryLoginTokens() *LoginTokenQuery {
-	return NewUserClient(u.config).QueryLoginTokens(u)
+// QueryAccounts queries the "accounts" edge of the User entity.
+func (u *User) QueryAccounts() *UserAccountQuery {
+	return NewUserClient(u.config).QueryAccounts(u)
 }
 
-// QueryAccount queries the "account" edge of the User entity.
-func (u *User) QueryAccount() *UserAccountQuery {
-	return NewUserClient(u.config).QueryAccount(u)
+// QueryProfile queries the "profile" edge of the User entity.
+func (u *User) QueryProfile() *UserProfileQuery {
+	return NewUserClient(u.config).QueryProfile(u)
+}
+
+// QueryTokens queries the "tokens" edge of the User entity.
+func (u *User) QueryTokens() *TokenQuery {
+	return NewUserClient(u.config).QueryTokens(u)
 }
 
 // Update returns a builder for updating this User.
@@ -195,11 +187,8 @@ func (u *User) String() string {
 	builder.WriteString("password=")
 	builder.WriteString(u.Password)
 	builder.WriteString(", ")
-	builder.WriteString("created_at=")
-	builder.WriteString(u.CreatedAt.Format(time.ANSIC))
-	builder.WriteString(", ")
-	builder.WriteString("updated_at=")
-	builder.WriteString(u.UpdatedAt.Format(time.ANSIC))
+	builder.WriteString("account_number=")
+	builder.WriteString(fmt.Sprintf("%v", u.AccountNumber))
 	builder.WriteByte(')')
 	return builder.String()
 }
