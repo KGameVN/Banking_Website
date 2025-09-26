@@ -72,14 +72,20 @@ func (c *Controller) Start() {
 
 // setupRoutes khai báo các endpoint
 func (c *Controller) setupRoutes() error {
+	// main group - error handler
+	apiGroup := c.e.Group("/api", appmid.ErrorHandlerMiddleware)
+
 	// register
-	c.e.POST("/register", c.services.Register)
-	// login
-	userGroup := c.e.Group("/user", appmid.JWTMiddleware, appmid.ErrorHandlerMiddleware)
+	apiGroup.POST("/register", c.services.Register)
+
+	// login - jwt
+	userGroup := apiGroup.Group("/user", appmid.JWTMiddleware)
 	userGroup.POST("/login", c.services.Login)
-	// business
-	accountGroup := c.e.Group("/account", appmid.JWTMiddleware, appmid.ErrorHandlerMiddleware)
-	accountGroup.POST("/account/transaction/:id", c.services.Transaction)
-	accountGroup.POST("/account/transfer", c.services.Transfer)
+
+	// account - jwt
+	accountGroup := apiGroup.Group("/account", appmid.JWTMiddleware)
+	accountGroup.GET("/:id", c.services.GetAccountInfo)
+	accountGroup.POST("/transaction/:id", c.services.Transaction)
+	accountGroup.POST("/transfer", c.services.Transfer)
 	return nil
 }

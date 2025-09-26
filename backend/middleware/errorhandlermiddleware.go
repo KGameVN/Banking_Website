@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"github.com/labstack/echo/v4"
 	"comb.com/banking/errors"
+	"github.com/labstack/echo/v4"
 )
 
 func ErrorHandlerMiddleware(next echo.HandlerFunc) echo.HandlerFunc {

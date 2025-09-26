@@ -1,61 +1,69 @@
 package services
 
 import (
-	"log"
 	"net/http"
 
+	"comb.com/banking/api"
 	"comb.com/banking/ent/user"
 	"comb.com/banking/ent/useraccount"
 	"comb.com/banking/errors"
+	"comb.com/banking/utils"
 	"github.com/labstack/echo/v4"
 )
 
 func (s *Service) GetAccountInfo(c echo.Context) error {
-	userID := c.Get("userID").(int)
+	userID, err := utils.StringToInt64(c.Param("id"))
+	if err != nil {
+		return &errors.AppError{Code: errors.ErrIDIsNotValid.Code, 
+			Message: errors.ErrAccountNotFound.Message, Err: err}
+	}
 
 	ctx := c.Request().Context()
 
 	account, err := s.Repository.DbClient.UserAccount.
 		Query().
-		Where(useraccount.HasUserWith(user.IDEQ(userID))).
+		Where(useraccount.HasUserWith(user.AccountNumber(userID))).
 		Only(ctx)
 
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, echo.Map{
-			"error": "Không tìm thấy tài khoản",
-		})
+		return &errors.AppError{Code: errors.ErrAccountNotFound.Code, 
+			Message: errors.ErrAccountNotFound.Message, Err: err}
 	}
 
-	return c.JSON(http.StatusOK, echo.Map{
+	return api.Success(c, echo.Map{
 		"account_number": account.AccountNumber,
 		"balance":        account.Balance,
 	})
+
 }
 
 func (s Service) Transaction(c echo.Context) error {
-	// userID := c.Param("id")
+	userID, err := utils.StringToInt64(c.Param("id"))
+	if err != nil {
+		return &errors.AppError{Code: errors.ErrIDIsNotValid.Code, 
+			Message: errors.ErrAccountNotFound.Message, Err: err}
+	}
 
 	type Request struct {
-		Id     int64  `json:"id"`
 		Amount int64  `json:"amount"`
 		Type   string `json:"type"` // "deposit" hoặc "withdraw"
 		Time   string `json:"time"` // time on transaction
 	}
 	var req Request
 	if err := c.Bind(&req); err != nil {
-		return &errors.AppError{Code: errors.ErrAccountNotFound.Code, Message: "ádfsadj", Err: err}
-		// return c.JSON(http.StatusBadRequest, echo.Map{"error": "Dữ liệu không hợp lệ"})
+		return &errors.AppError{Code: errors.ErrInvalidJsonFormat.Code, 
+			Message: errors.ErrInvalidJsonFormat.Message, Err: err}
 	}
 
 	ctx := c.Request().Context()
 
 	account, err := s.Repository.DbClient.UserAccount.
 		Query().
-		Where(useraccount.HasUserWith(user.AccountNumber(1))).
+		Where(useraccount.HasUserWith(user.AccountNumber(userID))).
 		Only(ctx)
 	if err != nil {
-		log.Println(err)
-		return c.JSON(http.StatusNotFound, echo.Map{"error": "Không tìm thấy tài khoản"})
+		return &errors.AppError{Code: errors.ErrAccountNotFound.Code, 
+			Message: errors.ErrAccountNotFound.Message, Err: err}
 	}
 
 	if req.Type != "dep" {
@@ -64,7 +72,8 @@ func (s Service) Transaction(c echo.Context) error {
 
 	newBalance := account.Balance + req.Amount
 	if newBalance < 0 {
-		return c.JSON(http.StatusBadRequest, echo.Map{"error": "Số dư không đủ"})
+		return &errors.AppError{Code: errors.ErrNotEnoughBalance.Code, 
+			Message: errors.ErrNotEnoughBalance.Message, Err: err}
 	}
 
 	_, err = s.Repository.DbClient.UserAccount.
@@ -72,7 +81,8 @@ func (s Service) Transaction(c echo.Context) error {
 		SetBalance(newBalance).
 		Save(ctx)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "Không thể cập nhật số dư"})
+		return &errors.AppError{Code: errors.ErrCanUpdateDB.Code, 
+			Message: errors.ErrCanUpdateDB.Message, Err: err}
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{"balance": newBalance})

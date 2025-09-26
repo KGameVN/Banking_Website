@@ -18,6 +18,9 @@ func HTTPStatusAndPayload(err error) (int, interface{}) {
 	if appError.Code == CodeInternal {
 		msg = "internal server error"
 	}
+	// TODO: Log the error with stack trace here
+	//
+	//
 	return status, map[string]interface{}{
 		"code":    int(appError.Code),
 		"message": msg,
