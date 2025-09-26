@@ -1,33 +1,35 @@
 package repository
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
 	"os"
 	"sync"
 
+	"comb.com/banking/ent"
+	"comb.com/banking/ent/migrate"
+	"comb.com/banking/ent/seed"
 	"entgo.io/ent/dialect"
 	entsql "entgo.io/ent/dialect/sql"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/joho/godotenv"
-
-	"comb.com/banking/ent"
 )
 
 type Repository struct {
 	DbClient *ent.Client
 }
 
-type RepositoryEnv struct {
-	DBUser     string
-	DBPassword string
-	DBPort     string
-	DBHost     string
-	DBName     string
+type Env struct {
+	DBUser     string `env:"DB_USER" envDefault:"postgres"`
+	DBPassword string `env:"DB_PASSWORD" envDefault:"postgres"`
+	DBPort     string `env:"DB_PORT" envDefault:"5432"`
+	DBHost     string `env:"DB_HOST" envDefault:"localhost"`
+	DBName     string `env:"DB_NAME" envDefault:"dbname"`
 }
 
-var env = &RepositoryEnv{}
+var env = &Env{}
 
 var (
 	instance *Repository
@@ -84,11 +86,12 @@ func loadRepositoryEnv() error {
 	} else {
 		env.DBHost = os.Getenv("DB_HOST_PROD")
 	}
+	log.Printf(env.DBName)
 	return nil
 }
 
 // GetRepositoryEnv trả về con trỏ đến `env`
-func (r Repository) GetRepositoryEnv() *RepositoryEnv {
+func (r Repository) GetRepositoryEnv() *Env {
 	return env
 }
 
@@ -101,4 +104,16 @@ func loadClient(databaseUrl string) (*ent.Client, error) {
 	// Create an ent.Driver from `db`.
 	drv := entsql.OpenDB(dialect.Postgres, db)
 	return ent.NewClient(ent.Driver(drv)), nil
+}
+
+func (r Repository) GenerateSchema() error {
+	ctx := context.Background()
+	// Auto migration
+	if err := r.DbClient.Schema.Create(ctx, migrate.WithGlobalUniqueID(true)); err != nil {
+		log.Fatalf("failed creating schema resources: %v", err)
+	}
+	// Seed dummy data
+	seed.SeedData(ctx, r.DbClient)
+	log.Println("✅ Dummy data inserted successfully!")
+	return nil
 }

@@ -3,57 +3,77 @@ package services
 import (
 	"net/http"
 
+	"comb.com/banking/api"
 	"comb.com/banking/ent/user"
 	"comb.com/banking/ent/useraccount"
-	"github.com/labstack/echo"
+	"comb.com/banking/errors"
+	"comb.com/banking/utils"
+	"github.com/labstack/echo/v4"
 )
 
-func (s Service) GetAccountInfo(c echo.Context) error {
-	userID := c.Get("userID").(int)
+func (s *Service) GetAccountInfo(c echo.Context) error {
+	userID, err := utils.StringToInt64(c.Param("id"))
+	if err != nil {
+		return &errors.AppError{Code: errors.ErrIDIsNotValid.Code, 
+			Message: errors.ErrAccountNotFound.Message, Err: err}
+	}
 
 	ctx := c.Request().Context()
 
 	account, err := s.Repository.DbClient.UserAccount.
 		Query().
-		Where(useraccount.HasUserWith(user.IDEQ(userID))).
+		Where(useraccount.HasUserWith(user.AccountNumber(userID))).
 		Only(ctx)
 
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, echo.Map{
-			"error": "Không tìm thấy tài khoản",
-		})
+		return &errors.AppError{Code: errors.ErrAccountNotFound.Code, 
+			Message: errors.ErrAccountNotFound.Message, Err: err}
 	}
 
-	return c.JSON(http.StatusOK, echo.Map{
+	return api.Success(c, echo.Map{
 		"account_number": account.AccountNumber,
 		"balance":        account.Balance,
 	})
+
 }
 
 func (s Service) Transaction(c echo.Context) error {
-	userID := c.Get("userID").(int)
+	userID, err := utils.StringToInt64(c.Param("id"))
+	if err != nil {
+		return &errors.AppError{Code: errors.ErrIDIsNotValid.Code, 
+			Message: errors.ErrAccountNotFound.Message, Err: err}
+	}
 
 	type Request struct {
-		Amount float64 `json:"amount"`
+		Amount int64  `json:"amount"`
+		Type   string `json:"type"` // "deposit" hoặc "withdraw"
+		Time   string `json:"time"` // time on transaction
 	}
 	var req Request
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, echo.Map{"error": "Dữ liệu không hợp lệ"})
+		return &errors.AppError{Code: errors.ErrInvalidJsonFormat.Code, 
+			Message: errors.ErrInvalidJsonFormat.Message, Err: err}
 	}
 
 	ctx := c.Request().Context()
 
 	account, err := s.Repository.DbClient.UserAccount.
 		Query().
-		Where(useraccount.HasUserWith(user.IDEQ(userID))).
+		Where(useraccount.HasUserWith(user.AccountNumber(userID))).
 		Only(ctx)
 	if err != nil {
-		return c.JSON(http.StatusNotFound, echo.Map{"error": "Không tìm thấy tài khoản"})
+		return &errors.AppError{Code: errors.ErrAccountNotFound.Code, 
+			Message: errors.ErrAccountNotFound.Message, Err: err}
+	}
+
+	if req.Type != "dep" {
+		req.Amount = -req.Amount
 	}
 
 	newBalance := account.Balance + req.Amount
 	if newBalance < 0 {
-		return c.JSON(http.StatusBadRequest, echo.Map{"error": "Số dư không đủ"})
+		return &errors.AppError{Code: errors.ErrNotEnoughBalance.Code, 
+			Message: errors.ErrNotEnoughBalance.Message, Err: err}
 	}
 
 	_, err = s.Repository.DbClient.UserAccount.
@@ -61,20 +81,22 @@ func (s Service) Transaction(c echo.Context) error {
 		SetBalance(newBalance).
 		Save(ctx)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "Không thể cập nhật số dư"})
+		return &errors.AppError{Code: errors.ErrCanUpdateDB.Code, 
+			Message: errors.ErrCanUpdateDB.Message, Err: err}
 	}
 
 	return c.JSON(http.StatusOK, echo.Map{"balance": newBalance})
 }
 
-
 func (s Service) Transfer(c echo.Context) error {
-	userID := c.Get("userID").(int)
+	// userID := c.Get("userID").(int)
 
 	type Request struct {
-		ToAccountNumber string  `json:"to_account_number"`
-		Amount          float64 `json:"amount"`
+		FromAccountNumber int64 `json:"from_account_number"`
+		ToAccountNumber   int   `json:"to_account_number"`
+		Amount            int64 `json:"amount"`
 	}
+
 	var req Request
 	if err := c.Bind(&req); err != nil || req.Amount <= 0 {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "Dữ liệu không hợp lệ"})
@@ -97,7 +119,7 @@ func (s Service) Transfer(c echo.Context) error {
 	// Tài khoản gửi
 	fromAcc, err := tx.UserAccount.
 		Query().
-		Where(useraccount.HasUserWith(user.IDEQ(userID))).
+		Where(useraccount.HasUserWith(user.AccountNumber(200))).
 		Only(ctx)
 	if err != nil {
 		_ = tx.Rollback()
@@ -107,7 +129,7 @@ func (s Service) Transfer(c echo.Context) error {
 	// Tài khoản nhận
 	toAcc, err := tx.UserAccount.
 		Query().
-		Where(useraccount.AccountNumberEQ(req.ToAccountNumber)).
+		Where(useraccount.AccountNumberEQ(int64(req.ToAccountNumber))).
 		Only(ctx)
 	if err != nil {
 		_ = tx.Rollback()

@@ -3,10 +3,9 @@
 package transaction
 
 import (
-	"time"
-
 	"comb.com/banking/ent/predicate"
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 // ID filters vertices based on their ID field.
@@ -54,184 +53,72 @@ func IDLTE(id int) predicate.Transaction {
 	return predicate.Transaction(sql.FieldLTE(FieldID, id))
 }
 
-// TransactionTime applies equality check predicate on the "TransactionTime" field. It's identical to TransactionTimeEQ.
-func TransactionTime(v time.Time) predicate.Transaction {
-	return predicate.Transaction(sql.FieldEQ(FieldTransactionTime, v))
-}
-
-// From applies equality check predicate on the "From" field. It's identical to FromEQ.
-func From(v int) predicate.Transaction {
-	return predicate.Transaction(sql.FieldEQ(FieldFrom, v))
-}
-
-// To applies equality check predicate on the "To" field. It's identical to ToEQ.
-func To(v int) predicate.Transaction {
-	return predicate.Transaction(sql.FieldEQ(FieldTo, v))
-}
-
-// Amount applies equality check predicate on the "Amount" field. It's identical to AmountEQ.
+// Amount applies equality check predicate on the "amount" field. It's identical to AmountEQ.
 func Amount(v int) predicate.Transaction {
 	return predicate.Transaction(sql.FieldEQ(FieldAmount, v))
 }
 
-// TransactionTimeEQ applies the EQ predicate on the "TransactionTime" field.
-func TransactionTimeEQ(v time.Time) predicate.Transaction {
-	return predicate.Transaction(sql.FieldEQ(FieldTransactionTime, v))
-}
-
-// TransactionTimeNEQ applies the NEQ predicate on the "TransactionTime" field.
-func TransactionTimeNEQ(v time.Time) predicate.Transaction {
-	return predicate.Transaction(sql.FieldNEQ(FieldTransactionTime, v))
-}
-
-// TransactionTimeIn applies the In predicate on the "TransactionTime" field.
-func TransactionTimeIn(vs ...time.Time) predicate.Transaction {
-	return predicate.Transaction(sql.FieldIn(FieldTransactionTime, vs...))
-}
-
-// TransactionTimeNotIn applies the NotIn predicate on the "TransactionTime" field.
-func TransactionTimeNotIn(vs ...time.Time) predicate.Transaction {
-	return predicate.Transaction(sql.FieldNotIn(FieldTransactionTime, vs...))
-}
-
-// TransactionTimeGT applies the GT predicate on the "TransactionTime" field.
-func TransactionTimeGT(v time.Time) predicate.Transaction {
-	return predicate.Transaction(sql.FieldGT(FieldTransactionTime, v))
-}
-
-// TransactionTimeGTE applies the GTE predicate on the "TransactionTime" field.
-func TransactionTimeGTE(v time.Time) predicate.Transaction {
-	return predicate.Transaction(sql.FieldGTE(FieldTransactionTime, v))
-}
-
-// TransactionTimeLT applies the LT predicate on the "TransactionTime" field.
-func TransactionTimeLT(v time.Time) predicate.Transaction {
-	return predicate.Transaction(sql.FieldLT(FieldTransactionTime, v))
-}
-
-// TransactionTimeLTE applies the LTE predicate on the "TransactionTime" field.
-func TransactionTimeLTE(v time.Time) predicate.Transaction {
-	return predicate.Transaction(sql.FieldLTE(FieldTransactionTime, v))
-}
-
-// FromEQ applies the EQ predicate on the "From" field.
-func FromEQ(v int) predicate.Transaction {
-	return predicate.Transaction(sql.FieldEQ(FieldFrom, v))
-}
-
-// FromNEQ applies the NEQ predicate on the "From" field.
-func FromNEQ(v int) predicate.Transaction {
-	return predicate.Transaction(sql.FieldNEQ(FieldFrom, v))
-}
-
-// FromIn applies the In predicate on the "From" field.
-func FromIn(vs ...int) predicate.Transaction {
-	return predicate.Transaction(sql.FieldIn(FieldFrom, vs...))
-}
-
-// FromNotIn applies the NotIn predicate on the "From" field.
-func FromNotIn(vs ...int) predicate.Transaction {
-	return predicate.Transaction(sql.FieldNotIn(FieldFrom, vs...))
-}
-
-// FromGT applies the GT predicate on the "From" field.
-func FromGT(v int) predicate.Transaction {
-	return predicate.Transaction(sql.FieldGT(FieldFrom, v))
-}
-
-// FromGTE applies the GTE predicate on the "From" field.
-func FromGTE(v int) predicate.Transaction {
-	return predicate.Transaction(sql.FieldGTE(FieldFrom, v))
-}
-
-// FromLT applies the LT predicate on the "From" field.
-func FromLT(v int) predicate.Transaction {
-	return predicate.Transaction(sql.FieldLT(FieldFrom, v))
-}
-
-// FromLTE applies the LTE predicate on the "From" field.
-func FromLTE(v int) predicate.Transaction {
-	return predicate.Transaction(sql.FieldLTE(FieldFrom, v))
-}
-
-// ToEQ applies the EQ predicate on the "To" field.
-func ToEQ(v int) predicate.Transaction {
-	return predicate.Transaction(sql.FieldEQ(FieldTo, v))
-}
-
-// ToNEQ applies the NEQ predicate on the "To" field.
-func ToNEQ(v int) predicate.Transaction {
-	return predicate.Transaction(sql.FieldNEQ(FieldTo, v))
-}
-
-// ToIn applies the In predicate on the "To" field.
-func ToIn(vs ...int) predicate.Transaction {
-	return predicate.Transaction(sql.FieldIn(FieldTo, vs...))
-}
-
-// ToNotIn applies the NotIn predicate on the "To" field.
-func ToNotIn(vs ...int) predicate.Transaction {
-	return predicate.Transaction(sql.FieldNotIn(FieldTo, vs...))
-}
-
-// ToGT applies the GT predicate on the "To" field.
-func ToGT(v int) predicate.Transaction {
-	return predicate.Transaction(sql.FieldGT(FieldTo, v))
-}
-
-// ToGTE applies the GTE predicate on the "To" field.
-func ToGTE(v int) predicate.Transaction {
-	return predicate.Transaction(sql.FieldGTE(FieldTo, v))
-}
-
-// ToLT applies the LT predicate on the "To" field.
-func ToLT(v int) predicate.Transaction {
-	return predicate.Transaction(sql.FieldLT(FieldTo, v))
-}
-
-// ToLTE applies the LTE predicate on the "To" field.
-func ToLTE(v int) predicate.Transaction {
-	return predicate.Transaction(sql.FieldLTE(FieldTo, v))
-}
-
-// AmountEQ applies the EQ predicate on the "Amount" field.
+// AmountEQ applies the EQ predicate on the "amount" field.
 func AmountEQ(v int) predicate.Transaction {
 	return predicate.Transaction(sql.FieldEQ(FieldAmount, v))
 }
 
-// AmountNEQ applies the NEQ predicate on the "Amount" field.
+// AmountNEQ applies the NEQ predicate on the "amount" field.
 func AmountNEQ(v int) predicate.Transaction {
 	return predicate.Transaction(sql.FieldNEQ(FieldAmount, v))
 }
 
-// AmountIn applies the In predicate on the "Amount" field.
+// AmountIn applies the In predicate on the "amount" field.
 func AmountIn(vs ...int) predicate.Transaction {
 	return predicate.Transaction(sql.FieldIn(FieldAmount, vs...))
 }
 
-// AmountNotIn applies the NotIn predicate on the "Amount" field.
+// AmountNotIn applies the NotIn predicate on the "amount" field.
 func AmountNotIn(vs ...int) predicate.Transaction {
 	return predicate.Transaction(sql.FieldNotIn(FieldAmount, vs...))
 }
 
-// AmountGT applies the GT predicate on the "Amount" field.
+// AmountGT applies the GT predicate on the "amount" field.
 func AmountGT(v int) predicate.Transaction {
 	return predicate.Transaction(sql.FieldGT(FieldAmount, v))
 }
 
-// AmountGTE applies the GTE predicate on the "Amount" field.
+// AmountGTE applies the GTE predicate on the "amount" field.
 func AmountGTE(v int) predicate.Transaction {
 	return predicate.Transaction(sql.FieldGTE(FieldAmount, v))
 }
 
-// AmountLT applies the LT predicate on the "Amount" field.
+// AmountLT applies the LT predicate on the "amount" field.
 func AmountLT(v int) predicate.Transaction {
 	return predicate.Transaction(sql.FieldLT(FieldAmount, v))
 }
 
-// AmountLTE applies the LTE predicate on the "Amount" field.
+// AmountLTE applies the LTE predicate on the "amount" field.
 func AmountLTE(v int) predicate.Transaction {
 	return predicate.Transaction(sql.FieldLTE(FieldAmount, v))
+}
+
+// HasAccount applies the HasEdge predicate on the "account" edge.
+func HasAccount() predicate.Transaction {
+	return predicate.Transaction(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, AccountTable, AccountColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasAccountWith applies the HasEdge predicate on the "account" edge with a given conditions (other predicates).
+func HasAccountWith(preds ...predicate.UserAccount) predicate.Transaction {
+	return predicate.Transaction(func(s *sql.Selector) {
+		step := newAccountStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
 }
 
 // And groups predicates with the AND operator between them.

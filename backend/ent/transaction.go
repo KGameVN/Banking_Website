@@ -5,9 +5,9 @@ package ent
 import (
 	"fmt"
 	"strings"
-	"time"
 
 	"comb.com/banking/ent/transaction"
+	"comb.com/banking/ent/useraccount"
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 )
@@ -17,15 +17,33 @@ type Transaction struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// TransactionTime holds the value of the "TransactionTime" field.
-	TransactionTime time.Time `json:"TransactionTime,omitempty"`
-	// From holds the value of the "From" field.
-	From int `json:"From,omitempty"`
-	// To holds the value of the "To" field.
-	To int `json:"To,omitempty"`
-	// Amount holds the value of the "Amount" field.
-	Amount       int `json:"Amount,omitempty"`
-	selectValues sql.SelectValues
+	// Amount holds the value of the "amount" field.
+	Amount int `json:"amount,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the TransactionQuery when eager-loading is set.
+	Edges                     TransactionEdges `json:"edges"`
+	user_account_transactions *int
+	selectValues              sql.SelectValues
+}
+
+// TransactionEdges holds the relations/edges for other nodes in the graph.
+type TransactionEdges struct {
+	// Account holds the value of the account edge.
+	Account *UserAccount `json:"account,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// AccountOrErr returns the Account value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e TransactionEdges) AccountOrErr() (*UserAccount, error) {
+	if e.Account != nil {
+		return e.Account, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: useraccount.Label}
+	}
+	return nil, &NotLoadedError{edge: "account"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -33,10 +51,10 @@ func (*Transaction) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case transaction.FieldID, transaction.FieldFrom, transaction.FieldTo, transaction.FieldAmount:
+		case transaction.FieldID, transaction.FieldAmount:
 			values[i] = new(sql.NullInt64)
-		case transaction.FieldTransactionTime:
-			values[i] = new(sql.NullTime)
+		case transaction.ForeignKeys[0]: // user_account_transactions
+			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -58,29 +76,18 @@ func (t *Transaction) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			t.ID = int(value.Int64)
-		case transaction.FieldTransactionTime:
-			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field TransactionTime", values[i])
-			} else if value.Valid {
-				t.TransactionTime = value.Time
-			}
-		case transaction.FieldFrom:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field From", values[i])
-			} else if value.Valid {
-				t.From = int(value.Int64)
-			}
-		case transaction.FieldTo:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field To", values[i])
-			} else if value.Valid {
-				t.To = int(value.Int64)
-			}
 		case transaction.FieldAmount:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field Amount", values[i])
+				return fmt.Errorf("unexpected type %T for field amount", values[i])
 			} else if value.Valid {
 				t.Amount = int(value.Int64)
+			}
+		case transaction.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field user_account_transactions", value)
+			} else if value.Valid {
+				t.user_account_transactions = new(int)
+				*t.user_account_transactions = int(value.Int64)
 			}
 		default:
 			t.selectValues.Set(columns[i], values[i])
@@ -93,6 +100,11 @@ func (t *Transaction) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (t *Transaction) Value(name string) (ent.Value, error) {
 	return t.selectValues.Get(name)
+}
+
+// QueryAccount queries the "account" edge of the Transaction entity.
+func (t *Transaction) QueryAccount() *UserAccountQuery {
+	return NewTransactionClient(t.config).QueryAccount(t)
 }
 
 // Update returns a builder for updating this Transaction.
@@ -118,16 +130,7 @@ func (t *Transaction) String() string {
 	var builder strings.Builder
 	builder.WriteString("Transaction(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", t.ID))
-	builder.WriteString("TransactionTime=")
-	builder.WriteString(t.TransactionTime.Format(time.ANSIC))
-	builder.WriteString(", ")
-	builder.WriteString("From=")
-	builder.WriteString(fmt.Sprintf("%v", t.From))
-	builder.WriteString(", ")
-	builder.WriteString("To=")
-	builder.WriteString(fmt.Sprintf("%v", t.To))
-	builder.WriteString(", ")
-	builder.WriteString("Amount=")
+	builder.WriteString("amount=")
 	builder.WriteString(fmt.Sprintf("%v", t.Amount))
 	builder.WriteByte(')')
 	return builder.String()

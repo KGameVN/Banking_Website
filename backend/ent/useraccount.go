@@ -5,7 +5,6 @@ package ent
 import (
 	"fmt"
 	"strings"
-	"time"
 
 	"comb.com/banking/ent/user"
 	"comb.com/banking/ent/useraccount"
@@ -19,25 +18,29 @@ type UserAccount struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// AccountNumber holds the value of the "account_number" field.
-	AccountNumber string `json:"account_number,omitempty"`
+	AccountNumber int64 `json:"account_number,omitempty"`
 	// Balance holds the value of the "balance" field.
-	Balance float64 `json:"balance,omitempty"`
-	// UpdatedAt holds the value of the "updated_at" field.
-	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	Balance int64 `json:"balance,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UserAccountQuery when eager-loading is set.
-	Edges        UserAccountEdges `json:"edges"`
-	user_account *int
-	selectValues sql.SelectValues
+	Edges         UserAccountEdges `json:"edges"`
+	user_accounts *int
+	selectValues  sql.SelectValues
 }
 
 // UserAccountEdges holds the relations/edges for other nodes in the graph.
 type UserAccountEdges struct {
 	// User holds the value of the user edge.
 	User *User `json:"user,omitempty"`
+	// Transactions holds the value of the transactions edge.
+	Transactions []*Transaction `json:"transactions,omitempty"`
+	// OutgoingTransfers holds the value of the outgoing_transfers edge.
+	OutgoingTransfers []*Transfer `json:"outgoing_transfers,omitempty"`
+	// IncomingTransfers holds the value of the incoming_transfers edge.
+	IncomingTransfers []*Transfer `json:"incoming_transfers,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [4]bool
 }
 
 // UserOrErr returns the User value or an error if the edge
@@ -51,20 +54,41 @@ func (e UserAccountEdges) UserOrErr() (*User, error) {
 	return nil, &NotLoadedError{edge: "user"}
 }
 
+// TransactionsOrErr returns the Transactions value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserAccountEdges) TransactionsOrErr() ([]*Transaction, error) {
+	if e.loadedTypes[1] {
+		return e.Transactions, nil
+	}
+	return nil, &NotLoadedError{edge: "transactions"}
+}
+
+// OutgoingTransfersOrErr returns the OutgoingTransfers value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserAccountEdges) OutgoingTransfersOrErr() ([]*Transfer, error) {
+	if e.loadedTypes[2] {
+		return e.OutgoingTransfers, nil
+	}
+	return nil, &NotLoadedError{edge: "outgoing_transfers"}
+}
+
+// IncomingTransfersOrErr returns the IncomingTransfers value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserAccountEdges) IncomingTransfersOrErr() ([]*Transfer, error) {
+	if e.loadedTypes[3] {
+		return e.IncomingTransfers, nil
+	}
+	return nil, &NotLoadedError{edge: "incoming_transfers"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*UserAccount) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case useraccount.FieldBalance:
-			values[i] = new(sql.NullFloat64)
-		case useraccount.FieldID:
+		case useraccount.FieldID, useraccount.FieldAccountNumber, useraccount.FieldBalance:
 			values[i] = new(sql.NullInt64)
-		case useraccount.FieldAccountNumber:
-			values[i] = new(sql.NullString)
-		case useraccount.FieldUpdatedAt:
-			values[i] = new(sql.NullTime)
-		case useraccount.ForeignKeys[0]: // user_account
+		case useraccount.ForeignKeys[0]: // user_accounts
 			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -88,29 +112,23 @@ func (ua *UserAccount) assignValues(columns []string, values []any) error {
 			}
 			ua.ID = int(value.Int64)
 		case useraccount.FieldAccountNumber:
-			if value, ok := values[i].(*sql.NullString); !ok {
+			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field account_number", values[i])
 			} else if value.Valid {
-				ua.AccountNumber = value.String
+				ua.AccountNumber = value.Int64
 			}
 		case useraccount.FieldBalance:
-			if value, ok := values[i].(*sql.NullFloat64); !ok {
+			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field balance", values[i])
 			} else if value.Valid {
-				ua.Balance = value.Float64
-			}
-		case useraccount.FieldUpdatedAt:
-			if value, ok := values[i].(*sql.NullTime); !ok {
-				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
-			} else if value.Valid {
-				ua.UpdatedAt = value.Time
+				ua.Balance = value.Int64
 			}
 		case useraccount.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field user_account", value)
+				return fmt.Errorf("unexpected type %T for edge-field user_accounts", value)
 			} else if value.Valid {
-				ua.user_account = new(int)
-				*ua.user_account = int(value.Int64)
+				ua.user_accounts = new(int)
+				*ua.user_accounts = int(value.Int64)
 			}
 		default:
 			ua.selectValues.Set(columns[i], values[i])
@@ -128,6 +146,21 @@ func (ua *UserAccount) Value(name string) (ent.Value, error) {
 // QueryUser queries the "user" edge of the UserAccount entity.
 func (ua *UserAccount) QueryUser() *UserQuery {
 	return NewUserAccountClient(ua.config).QueryUser(ua)
+}
+
+// QueryTransactions queries the "transactions" edge of the UserAccount entity.
+func (ua *UserAccount) QueryTransactions() *TransactionQuery {
+	return NewUserAccountClient(ua.config).QueryTransactions(ua)
+}
+
+// QueryOutgoingTransfers queries the "outgoing_transfers" edge of the UserAccount entity.
+func (ua *UserAccount) QueryOutgoingTransfers() *TransferQuery {
+	return NewUserAccountClient(ua.config).QueryOutgoingTransfers(ua)
+}
+
+// QueryIncomingTransfers queries the "incoming_transfers" edge of the UserAccount entity.
+func (ua *UserAccount) QueryIncomingTransfers() *TransferQuery {
+	return NewUserAccountClient(ua.config).QueryIncomingTransfers(ua)
 }
 
 // Update returns a builder for updating this UserAccount.
@@ -154,13 +187,10 @@ func (ua *UserAccount) String() string {
 	builder.WriteString("UserAccount(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", ua.ID))
 	builder.WriteString("account_number=")
-	builder.WriteString(ua.AccountNumber)
+	builder.WriteString(fmt.Sprintf("%v", ua.AccountNumber))
 	builder.WriteString(", ")
 	builder.WriteString("balance=")
 	builder.WriteString(fmt.Sprintf("%v", ua.Balance))
-	builder.WriteString(", ")
-	builder.WriteString("updated_at=")
-	builder.WriteString(ua.UpdatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

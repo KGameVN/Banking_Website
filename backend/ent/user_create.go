@@ -6,11 +6,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
-	"comb.com/banking/ent/logintoken"
+	"comb.com/banking/ent/token"
 	"comb.com/banking/ent/user"
 	"comb.com/banking/ent/useraccount"
+	"comb.com/banking/ent/userprofile"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 )
@@ -28,12 +28,6 @@ func (uc *UserCreate) SetUsername(s string) *UserCreate {
 	return uc
 }
 
-// SetFullname sets the "fullname" field.
-func (uc *UserCreate) SetFullname(s string) *UserCreate {
-	uc.mutation.SetFullname(s)
-	return uc
-}
-
 // SetEmail sets the "email" field.
 func (uc *UserCreate) SetEmail(s string) *UserCreate {
 	uc.mutation.SetEmail(s)
@@ -46,84 +40,59 @@ func (uc *UserCreate) SetPassword(s string) *UserCreate {
 	return uc
 }
 
-// SetBirthday sets the "birthday" field.
-func (uc *UserCreate) SetBirthday(t time.Time) *UserCreate {
-	uc.mutation.SetBirthday(t)
+// SetAccountNumber sets the "account_number" field.
+func (uc *UserCreate) SetAccountNumber(i int64) *UserCreate {
+	uc.mutation.SetAccountNumber(i)
 	return uc
 }
 
-// SetNillableBirthday sets the "birthday" field if the given value is not nil.
-func (uc *UserCreate) SetNillableBirthday(t *time.Time) *UserCreate {
-	if t != nil {
-		uc.SetBirthday(*t)
+// AddAccountIDs adds the "accounts" edge to the UserAccount entity by IDs.
+func (uc *UserCreate) AddAccountIDs(ids ...int) *UserCreate {
+	uc.mutation.AddAccountIDs(ids...)
+	return uc
+}
+
+// AddAccounts adds the "accounts" edges to the UserAccount entity.
+func (uc *UserCreate) AddAccounts(u ...*UserAccount) *UserCreate {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
 	}
+	return uc.AddAccountIDs(ids...)
+}
+
+// SetProfileID sets the "profile" edge to the UserProfile entity by ID.
+func (uc *UserCreate) SetProfileID(id int) *UserCreate {
+	uc.mutation.SetProfileID(id)
 	return uc
 }
 
-// SetCreatedAt sets the "created_at" field.
-func (uc *UserCreate) SetCreatedAt(t time.Time) *UserCreate {
-	uc.mutation.SetCreatedAt(t)
-	return uc
-}
-
-// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (uc *UserCreate) SetNillableCreatedAt(t *time.Time) *UserCreate {
-	if t != nil {
-		uc.SetCreatedAt(*t)
-	}
-	return uc
-}
-
-// SetUpdatedAt sets the "updated_at" field.
-func (uc *UserCreate) SetUpdatedAt(t time.Time) *UserCreate {
-	uc.mutation.SetUpdatedAt(t)
-	return uc
-}
-
-// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
-func (uc *UserCreate) SetNillableUpdatedAt(t *time.Time) *UserCreate {
-	if t != nil {
-		uc.SetUpdatedAt(*t)
-	}
-	return uc
-}
-
-// SetLoginTokensID sets the "login_tokens" edge to the LoginToken entity by ID.
-func (uc *UserCreate) SetLoginTokensID(id int) *UserCreate {
-	uc.mutation.SetLoginTokensID(id)
-	return uc
-}
-
-// SetNillableLoginTokensID sets the "login_tokens" edge to the LoginToken entity by ID if the given value is not nil.
-func (uc *UserCreate) SetNillableLoginTokensID(id *int) *UserCreate {
+// SetNillableProfileID sets the "profile" edge to the UserProfile entity by ID if the given value is not nil.
+func (uc *UserCreate) SetNillableProfileID(id *int) *UserCreate {
 	if id != nil {
-		uc = uc.SetLoginTokensID(*id)
+		uc = uc.SetProfileID(*id)
 	}
 	return uc
 }
 
-// SetLoginTokens sets the "login_tokens" edge to the LoginToken entity.
-func (uc *UserCreate) SetLoginTokens(l *LoginToken) *UserCreate {
-	return uc.SetLoginTokensID(l.ID)
+// SetProfile sets the "profile" edge to the UserProfile entity.
+func (uc *UserCreate) SetProfile(u *UserProfile) *UserCreate {
+	return uc.SetProfileID(u.ID)
 }
 
-// SetAccountID sets the "account" edge to the UserAccount entity by ID.
-func (uc *UserCreate) SetAccountID(id int) *UserCreate {
-	uc.mutation.SetAccountID(id)
+// AddTokenIDs adds the "tokens" edge to the Token entity by IDs.
+func (uc *UserCreate) AddTokenIDs(ids ...int) *UserCreate {
+	uc.mutation.AddTokenIDs(ids...)
 	return uc
 }
 
-// SetNillableAccountID sets the "account" edge to the UserAccount entity by ID if the given value is not nil.
-func (uc *UserCreate) SetNillableAccountID(id *int) *UserCreate {
-	if id != nil {
-		uc = uc.SetAccountID(*id)
+// AddTokens adds the "tokens" edges to the Token entity.
+func (uc *UserCreate) AddTokens(t ...*Token) *UserCreate {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
 	}
-	return uc
-}
-
-// SetAccount sets the "account" edge to the UserAccount entity.
-func (uc *UserCreate) SetAccount(u *UserAccount) *UserCreate {
-	return uc.SetAccountID(u.ID)
+	return uc.AddTokenIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -133,7 +102,6 @@ func (uc *UserCreate) Mutation() *UserMutation {
 
 // Save creates the User in the database.
 func (uc *UserCreate) Save(ctx context.Context) (*User, error) {
-	uc.defaults()
 	return withHooks(ctx, uc.sqlSave, uc.mutation, uc.hooks)
 }
 
@@ -159,35 +127,10 @@ func (uc *UserCreate) ExecX(ctx context.Context) {
 	}
 }
 
-// defaults sets the default values of the builder before save.
-func (uc *UserCreate) defaults() {
-	if _, ok := uc.mutation.CreatedAt(); !ok {
-		v := user.DefaultCreatedAt()
-		uc.mutation.SetCreatedAt(v)
-	}
-	if _, ok := uc.mutation.UpdatedAt(); !ok {
-		v := user.DefaultUpdatedAt()
-		uc.mutation.SetUpdatedAt(v)
-	}
-}
-
 // check runs all checks and user-defined validators on the builder.
 func (uc *UserCreate) check() error {
 	if _, ok := uc.mutation.Username(); !ok {
 		return &ValidationError{Name: "username", err: errors.New(`ent: missing required field "User.username"`)}
-	}
-	if v, ok := uc.mutation.Username(); ok {
-		if err := user.UsernameValidator(v); err != nil {
-			return &ValidationError{Name: "username", err: fmt.Errorf(`ent: validator failed for field "User.username": %w`, err)}
-		}
-	}
-	if _, ok := uc.mutation.Fullname(); !ok {
-		return &ValidationError{Name: "fullname", err: errors.New(`ent: missing required field "User.fullname"`)}
-	}
-	if v, ok := uc.mutation.Fullname(); ok {
-		if err := user.FullnameValidator(v); err != nil {
-			return &ValidationError{Name: "fullname", err: fmt.Errorf(`ent: validator failed for field "User.fullname": %w`, err)}
-		}
 	}
 	if _, ok := uc.mutation.Email(); !ok {
 		return &ValidationError{Name: "email", err: errors.New(`ent: missing required field "User.email"`)}
@@ -195,16 +138,8 @@ func (uc *UserCreate) check() error {
 	if _, ok := uc.mutation.Password(); !ok {
 		return &ValidationError{Name: "password", err: errors.New(`ent: missing required field "User.password"`)}
 	}
-	if v, ok := uc.mutation.Password(); ok {
-		if err := user.PasswordValidator(v); err != nil {
-			return &ValidationError{Name: "password", err: fmt.Errorf(`ent: validator failed for field "User.password": %w`, err)}
-		}
-	}
-	if _, ok := uc.mutation.CreatedAt(); !ok {
-		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "User.created_at"`)}
-	}
-	if _, ok := uc.mutation.UpdatedAt(); !ok {
-		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "User.updated_at"`)}
+	if _, ok := uc.mutation.AccountNumber(); !ok {
+		return &ValidationError{Name: "account_number", err: errors.New(`ent: missing required field "User.account_number"`)}
 	}
 	return nil
 }
@@ -236,10 +171,6 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec.SetField(user.FieldUsername, field.TypeString, value)
 		_node.Username = value
 	}
-	if value, ok := uc.mutation.Fullname(); ok {
-		_spec.SetField(user.FieldFullname, field.TypeString, value)
-		_node.Fullname = value
-	}
 	if value, ok := uc.mutation.Email(); ok {
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
 		_node.Email = value
@@ -248,44 +179,51 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec.SetField(user.FieldPassword, field.TypeString, value)
 		_node.Password = value
 	}
-	if value, ok := uc.mutation.Birthday(); ok {
-		_spec.SetField(user.FieldBirthday, field.TypeTime, value)
-		_node.Birthday = value
+	if value, ok := uc.mutation.AccountNumber(); ok {
+		_spec.SetField(user.FieldAccountNumber, field.TypeInt64, value)
+		_node.AccountNumber = value
 	}
-	if value, ok := uc.mutation.CreatedAt(); ok {
-		_spec.SetField(user.FieldCreatedAt, field.TypeTime, value)
-		_node.CreatedAt = value
-	}
-	if value, ok := uc.mutation.UpdatedAt(); ok {
-		_spec.SetField(user.FieldUpdatedAt, field.TypeTime, value)
-		_node.UpdatedAt = value
-	}
-	if nodes := uc.mutation.LoginTokensIDs(); len(nodes) > 0 {
+	if nodes := uc.mutation.AccountsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
-			Inverse: true,
-			Table:   user.LoginTokensTable,
-			Columns: []string{user.LoginTokensColumn},
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AccountsTable,
+			Columns: []string{user.AccountsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(logintoken.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.login_token_user = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := uc.mutation.AccountIDs(); len(nodes) > 0 {
+	if nodes := uc.mutation.ProfileIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
 			Inverse: false,
-			Table:   user.AccountTable,
-			Columns: []string{user.AccountColumn},
+			Table:   user.ProfileTable,
+			Columns: []string{user.ProfileColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(userprofile.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.mutation.TokensIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.TokensTable,
+			Columns: []string{user.TokensColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(token.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -314,7 +252,6 @@ func (ucb *UserCreateBulk) Save(ctx context.Context) ([]*User, error) {
 	for i := range ucb.builders {
 		func(i int, root context.Context) {
 			builder := ucb.builders[i]
-			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*UserMutation)
 				if !ok {

@@ -6,14 +6,20 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
-// LoginToken is the predicate function for logintoken builders.
-type LoginToken func(*sql.Selector)
+// Token is the predicate function for token builders.
+type Token func(*sql.Selector)
 
 // Transaction is the predicate function for transaction builders.
 type Transaction func(*sql.Selector)
+
+// Transfer is the predicate function for transfer builders.
+type Transfer func(*sql.Selector)
 
 // User is the predicate function for user builders.
 type User func(*sql.Selector)
 
 // UserAccount is the predicate function for useraccount builders.
 type UserAccount func(*sql.Selector)
+
+// UserProfile is the predicate function for userprofile builders.
+type UserProfile func(*sql.Selector)

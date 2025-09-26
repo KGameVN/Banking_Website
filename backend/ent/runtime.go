@@ -5,64 +5,22 @@ package ent
 import (
 	"time"
 
-	"comb.com/banking/ent/logintoken"
 	"comb.com/banking/ent/schema"
-	"comb.com/banking/ent/user"
-	"comb.com/banking/ent/useraccount"
+	"comb.com/banking/ent/token"
 )
 
 // The init function reads all schema descriptors with runtime code
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
-	logintokenFields := schema.LoginToken{}.Fields()
-	_ = logintokenFields
-	// logintokenDescToken is the schema descriptor for token field.
-	logintokenDescToken := logintokenFields[0].Descriptor()
-	// logintoken.TokenValidator is a validator for the "token" field. It is called by the builders before save.
-	logintoken.TokenValidator = logintokenDescToken.Validators[0].(func(string) error)
-	// logintokenDescCreatedAt is the schema descriptor for created_at field.
-	logintokenDescCreatedAt := logintokenFields[2].Descriptor()
-	// logintoken.DefaultCreatedAt holds the default value on creation for the created_at field.
-	logintoken.DefaultCreatedAt = logintokenDescCreatedAt.Default.(func() time.Time)
-	userFields := schema.User{}.Fields()
-	_ = userFields
-	// userDescUsername is the schema descriptor for username field.
-	userDescUsername := userFields[0].Descriptor()
-	// user.UsernameValidator is a validator for the "username" field. It is called by the builders before save.
-	user.UsernameValidator = userDescUsername.Validators[0].(func(string) error)
-	// userDescFullname is the schema descriptor for fullname field.
-	userDescFullname := userFields[1].Descriptor()
-	// user.FullnameValidator is a validator for the "fullname" field. It is called by the builders before save.
-	user.FullnameValidator = userDescFullname.Validators[0].(func(string) error)
-	// userDescPassword is the schema descriptor for password field.
-	userDescPassword := userFields[3].Descriptor()
-	// user.PasswordValidator is a validator for the "password" field. It is called by the builders before save.
-	user.PasswordValidator = userDescPassword.Validators[0].(func(string) error)
-	// userDescCreatedAt is the schema descriptor for created_at field.
-	userDescCreatedAt := userFields[5].Descriptor()
-	// user.DefaultCreatedAt holds the default value on creation for the created_at field.
-	user.DefaultCreatedAt = userDescCreatedAt.Default.(func() time.Time)
-	// userDescUpdatedAt is the schema descriptor for updated_at field.
-	userDescUpdatedAt := userFields[6].Descriptor()
-	// user.DefaultUpdatedAt holds the default value on creation for the updated_at field.
-	user.DefaultUpdatedAt = userDescUpdatedAt.Default.(func() time.Time)
-	// user.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
-	user.UpdateDefaultUpdatedAt = userDescUpdatedAt.UpdateDefault.(func() time.Time)
-	useraccountFields := schema.UserAccount{}.Fields()
-	_ = useraccountFields
-	// useraccountDescAccountNumber is the schema descriptor for account_number field.
-	useraccountDescAccountNumber := useraccountFields[0].Descriptor()
-	// useraccount.AccountNumberValidator is a validator for the "account_number" field. It is called by the builders before save.
-	useraccount.AccountNumberValidator = useraccountDescAccountNumber.Validators[0].(func(string) error)
-	// useraccountDescBalance is the schema descriptor for balance field.
-	useraccountDescBalance := useraccountFields[1].Descriptor()
-	// useraccount.DefaultBalance holds the default value on creation for the balance field.
-	useraccount.DefaultBalance = useraccountDescBalance.Default.(float64)
-	// useraccountDescUpdatedAt is the schema descriptor for updated_at field.
-	useraccountDescUpdatedAt := useraccountFields[2].Descriptor()
-	// useraccount.DefaultUpdatedAt holds the default value on creation for the updated_at field.
-	useraccount.DefaultUpdatedAt = useraccountDescUpdatedAt.Default.(func() time.Time)
-	// useraccount.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
-	useraccount.UpdateDefaultUpdatedAt = useraccountDescUpdatedAt.UpdateDefault.(func() time.Time)
+	tokenFields := schema.Token{}.Fields()
+	_ = tokenFields
+	// tokenDescExpiredtime is the schema descriptor for expiredtime field.
+	tokenDescExpiredtime := tokenFields[2].Descriptor()
+	// token.DefaultExpiredtime holds the default value on creation for the expiredtime field.
+	token.DefaultExpiredtime = tokenDescExpiredtime.Default.(func() time.Time)
+	// tokenDescIsUsing is the schema descriptor for is_using field.
+	tokenDescIsUsing := tokenFields[3].Descriptor()
+	// token.DefaultIsUsing holds the default value on creation for the is_using field.
+	token.DefaultIsUsing = tokenDescIsUsing.Default.(bool)
 }

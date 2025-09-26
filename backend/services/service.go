@@ -20,6 +20,10 @@ var (
 func GetService() *Service {
 	once.Do(func() {
 		repo := repository.GetRepository()
+		err := repo.GenerateSchema()
+		if err != nil {
+			log.Println("Seed generete dummy error")
+		}
 		if repo == nil {
 			log.Println("Cannot initialize service: repository is nil")
 			return

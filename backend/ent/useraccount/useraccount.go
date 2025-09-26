@@ -3,8 +3,6 @@
 package useraccount
 
 import (
-	"time"
-
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 )
@@ -18,10 +16,14 @@ const (
 	FieldAccountNumber = "account_number"
 	// FieldBalance holds the string denoting the balance field in the database.
 	FieldBalance = "balance"
-	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
-	FieldUpdatedAt = "updated_at"
 	// EdgeUser holds the string denoting the user edge name in mutations.
 	EdgeUser = "user"
+	// EdgeTransactions holds the string denoting the transactions edge name in mutations.
+	EdgeTransactions = "transactions"
+	// EdgeOutgoingTransfers holds the string denoting the outgoing_transfers edge name in mutations.
+	EdgeOutgoingTransfers = "outgoing_transfers"
+	// EdgeIncomingTransfers holds the string denoting the incoming_transfers edge name in mutations.
+	EdgeIncomingTransfers = "incoming_transfers"
 	// Table holds the table name of the useraccount in the database.
 	Table = "user_accounts"
 	// UserTable is the table that holds the user relation/edge.
@@ -30,7 +32,28 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "user" package.
 	UserInverseTable = "users"
 	// UserColumn is the table column denoting the user relation/edge.
-	UserColumn = "user_account"
+	UserColumn = "user_accounts"
+	// TransactionsTable is the table that holds the transactions relation/edge.
+	TransactionsTable = "transactions"
+	// TransactionsInverseTable is the table name for the Transaction entity.
+	// It exists in this package in order to avoid circular dependency with the "transaction" package.
+	TransactionsInverseTable = "transactions"
+	// TransactionsColumn is the table column denoting the transactions relation/edge.
+	TransactionsColumn = "user_account_transactions"
+	// OutgoingTransfersTable is the table that holds the outgoing_transfers relation/edge.
+	OutgoingTransfersTable = "transfers"
+	// OutgoingTransfersInverseTable is the table name for the Transfer entity.
+	// It exists in this package in order to avoid circular dependency with the "transfer" package.
+	OutgoingTransfersInverseTable = "transfers"
+	// OutgoingTransfersColumn is the table column denoting the outgoing_transfers relation/edge.
+	OutgoingTransfersColumn = "user_account_outgoing_transfers"
+	// IncomingTransfersTable is the table that holds the incoming_transfers relation/edge.
+	IncomingTransfersTable = "transfers"
+	// IncomingTransfersInverseTable is the table name for the Transfer entity.
+	// It exists in this package in order to avoid circular dependency with the "transfer" package.
+	IncomingTransfersInverseTable = "transfers"
+	// IncomingTransfersColumn is the table column denoting the incoming_transfers relation/edge.
+	IncomingTransfersColumn = "user_account_incoming_transfers"
 )
 
 // Columns holds all SQL columns for useraccount fields.
@@ -38,13 +61,12 @@ var Columns = []string{
 	FieldID,
 	FieldAccountNumber,
 	FieldBalance,
-	FieldUpdatedAt,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "user_accounts"
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
-	"user_account",
+	"user_accounts",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -61,17 +83,6 @@ func ValidColumn(column string) bool {
 	}
 	return false
 }
-
-var (
-	// AccountNumberValidator is a validator for the "account_number" field. It is called by the builders before save.
-	AccountNumberValidator func(string) error
-	// DefaultBalance holds the default value on creation for the "balance" field.
-	DefaultBalance float64
-	// DefaultUpdatedAt holds the default value on creation for the "updated_at" field.
-	DefaultUpdatedAt func() time.Time
-	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
-	UpdateDefaultUpdatedAt func() time.Time
-)
 
 // OrderOption defines the ordering options for the UserAccount queries.
 type OrderOption func(*sql.Selector)
@@ -91,21 +102,79 @@ func ByBalance(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldBalance, opts...).ToFunc()
 }
 
-// ByUpdatedAt orders the results by the updated_at field.
-func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
-}
-
 // ByUserField orders the results by user field.
 func ByUserField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
 		sqlgraph.OrderByNeighborTerms(s, newUserStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByTransactionsCount orders the results by transactions count.
+func ByTransactionsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newTransactionsStep(), opts...)
+	}
+}
+
+// ByTransactions orders the results by transactions terms.
+func ByTransactions(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newTransactionsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByOutgoingTransfersCount orders the results by outgoing_transfers count.
+func ByOutgoingTransfersCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newOutgoingTransfersStep(), opts...)
+	}
+}
+
+// ByOutgoingTransfers orders the results by outgoing_transfers terms.
+func ByOutgoingTransfers(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newOutgoingTransfersStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByIncomingTransfersCount orders the results by incoming_transfers count.
+func ByIncomingTransfersCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newIncomingTransfersStep(), opts...)
+	}
+}
+
+// ByIncomingTransfers orders the results by incoming_transfers terms.
+func ByIncomingTransfers(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newIncomingTransfersStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newUserStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(UserInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2O, true, UserTable, UserColumn),
+		sqlgraph.Edge(sqlgraph.M2O, true, UserTable, UserColumn),
+	)
+}
+func newTransactionsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(TransactionsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, TransactionsTable, TransactionsColumn),
+	)
+}
+func newOutgoingTransfersStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(OutgoingTransfersInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, OutgoingTransfersTable, OutgoingTransfersColumn),
+	)
+}
+func newIncomingTransfersStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(IncomingTransfersInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, IncomingTransfersTable, IncomingTransfersColumn),
 	)
 }

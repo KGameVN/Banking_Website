@@ -6,9 +6,10 @@ import (
 	"time"
 
 	"comb.com/banking/ent"
+	"comb.com/banking/ent/token"
 	"comb.com/banking/ent/user"
 	"comb.com/banking/utils"
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 func (s Service) Login(c echo.Context) error {
@@ -31,7 +32,13 @@ func (s Service) Login(c echo.Context) error {
 		Where(
 			user.UsernameEQ(username),
 			user.PasswordEQ(password), // ❗ Nếu dùng hash: chỉ kiểm tra email, sau đó dùng bcrypt.CompareHashAndPassword
-		).
+		).WithTokens(
+		func(tq *ent.TokenQuery) {
+			tq.Where(
+				token.ExpiredtimeGT(time.Now()), // expiredtime > now
+				token.IsUsingEQ(true),           // is_using = true
+			)
+		}).
 		Only(c.Request().Context())
 
 	if err != nil {
@@ -42,31 +49,66 @@ func (s Service) Login(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "Database error"})
 	}
 
-	// jwt
-	token, err := utils.GenerateJWT(foundUser.ID, foundUser.Username)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "Could not generate token"})
-	}
+	if len(foundUser.Edges.Tokens) == 0 {
+		// jwt
+		token, err := utils.GenerateJWT(foundUser.Username, password)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, echo.Map{"error": "Could not generate token"})
+		}
 
-	expiryDate := time.Now().Add(1 * time.Hour)
-	if rememberMe {
-		expiryDate = time.Now().Add(120 * time.Hour)
-	}
-	_, err = s.Repository.DbClient.LoginToken.Create().
-		SetUserID(foundUser.ID).
-		SetToken(token).
-		SetExpiredtime(expiryDate).
-		Save(c.Request().Context())
+		expiryDate := time.Now().Add(1 * time.Hour)
+		if rememberMe {
+			expiryDate = time.Now().Add(120 * time.Hour)
+		}
+		_, err = s.Repository.DbClient.Token.Create().
+			SetUserID(foundUser.ID).
+			SetToken(token).
+			SetExpiredtime(expiryDate).
+			SetType("login").
+			Save(c.Request().Context())
 
+		if err != nil {
+			log.Println(err)
+			return c.JSON(http.StatusInternalServerError, echo.Map{"error": err})
+		}
+		return c.JSON(http.StatusOK, echo.Map{
+			"message": "Login successful",
+			"token":   token,
+			"user": echo.Map{
+				"id":            foundUser.ID,
+				"accountnumber": foundUser.AccountNumber,
+				"username":      foundUser.Username,
+				"email":         foundUser.Email,
+			},
+		})
+	}
 	// response
 	return c.JSON(http.StatusOK, echo.Map{
 		"message": "Login successful",
-		"token":   token,
+		"token":   foundUser.Edges.Tokens[0].Token,
 		"user": echo.Map{
-			"id":       foundUser.ID,
-			"username": foundUser.Username,
-			"email":    foundUser.Email,
-			"fullname": foundUser.Fullname,
+			"id":            foundUser.ID,
+			"accountnumber": foundUser.AccountNumber,
+			"username":      foundUser.Username,
+			"email":         foundUser.Email,
 		},
+	})
+}
+
+func (s *Service) ProfileService(c echo.Context) error {
+	return c.JSON(http.StatusOK, echo.Map{
+		"message": "hello",
+	})
+}
+
+func (s *Service) GetTransHistory(c echo.Context) error {
+	return c.JSON(http.StatusOK, echo.Map{
+		"message": "GetTransHistory",
+	})
+}
+
+func (s *Service) Register(c echo.Context) error {
+	return c.JSON(http.StatusOK, echo.Map{
+		"message": "register",
 	})
 }

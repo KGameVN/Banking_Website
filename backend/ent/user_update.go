@@ -6,12 +6,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
-	"comb.com/banking/ent/logintoken"
 	"comb.com/banking/ent/predicate"
+	"comb.com/banking/ent/token"
 	"comb.com/banking/ent/user"
 	"comb.com/banking/ent/useraccount"
+	"comb.com/banking/ent/userprofile"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -44,20 +44,6 @@ func (uu *UserUpdate) SetNillableUsername(s *string) *UserUpdate {
 	return uu
 }
 
-// SetFullname sets the "fullname" field.
-func (uu *UserUpdate) SetFullname(s string) *UserUpdate {
-	uu.mutation.SetFullname(s)
-	return uu
-}
-
-// SetNillableFullname sets the "fullname" field if the given value is not nil.
-func (uu *UserUpdate) SetNillableFullname(s *string) *UserUpdate {
-	if s != nil {
-		uu.SetFullname(*s)
-	}
-	return uu
-}
-
 // SetEmail sets the "email" field.
 func (uu *UserUpdate) SetEmail(s string) *UserUpdate {
 	uu.mutation.SetEmail(s)
@@ -86,82 +72,74 @@ func (uu *UserUpdate) SetNillablePassword(s *string) *UserUpdate {
 	return uu
 }
 
-// SetBirthday sets the "birthday" field.
-func (uu *UserUpdate) SetBirthday(t time.Time) *UserUpdate {
-	uu.mutation.SetBirthday(t)
+// SetAccountNumber sets the "account_number" field.
+func (uu *UserUpdate) SetAccountNumber(i int64) *UserUpdate {
+	uu.mutation.ResetAccountNumber()
+	uu.mutation.SetAccountNumber(i)
 	return uu
 }
 
-// SetNillableBirthday sets the "birthday" field if the given value is not nil.
-func (uu *UserUpdate) SetNillableBirthday(t *time.Time) *UserUpdate {
-	if t != nil {
-		uu.SetBirthday(*t)
+// SetNillableAccountNumber sets the "account_number" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableAccountNumber(i *int64) *UserUpdate {
+	if i != nil {
+		uu.SetAccountNumber(*i)
 	}
 	return uu
 }
 
-// ClearBirthday clears the value of the "birthday" field.
-func (uu *UserUpdate) ClearBirthday() *UserUpdate {
-	uu.mutation.ClearBirthday()
+// AddAccountNumber adds i to the "account_number" field.
+func (uu *UserUpdate) AddAccountNumber(i int64) *UserUpdate {
+	uu.mutation.AddAccountNumber(i)
 	return uu
 }
 
-// SetCreatedAt sets the "created_at" field.
-func (uu *UserUpdate) SetCreatedAt(t time.Time) *UserUpdate {
-	uu.mutation.SetCreatedAt(t)
+// AddAccountIDs adds the "accounts" edge to the UserAccount entity by IDs.
+func (uu *UserUpdate) AddAccountIDs(ids ...int) *UserUpdate {
+	uu.mutation.AddAccountIDs(ids...)
 	return uu
 }
 
-// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (uu *UserUpdate) SetNillableCreatedAt(t *time.Time) *UserUpdate {
-	if t != nil {
-		uu.SetCreatedAt(*t)
+// AddAccounts adds the "accounts" edges to the UserAccount entity.
+func (uu *UserUpdate) AddAccounts(u ...*UserAccount) *UserUpdate {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
 	}
+	return uu.AddAccountIDs(ids...)
+}
+
+// SetProfileID sets the "profile" edge to the UserProfile entity by ID.
+func (uu *UserUpdate) SetProfileID(id int) *UserUpdate {
+	uu.mutation.SetProfileID(id)
 	return uu
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (uu *UserUpdate) SetUpdatedAt(t time.Time) *UserUpdate {
-	uu.mutation.SetUpdatedAt(t)
-	return uu
-}
-
-// SetLoginTokensID sets the "login_tokens" edge to the LoginToken entity by ID.
-func (uu *UserUpdate) SetLoginTokensID(id int) *UserUpdate {
-	uu.mutation.SetLoginTokensID(id)
-	return uu
-}
-
-// SetNillableLoginTokensID sets the "login_tokens" edge to the LoginToken entity by ID if the given value is not nil.
-func (uu *UserUpdate) SetNillableLoginTokensID(id *int) *UserUpdate {
+// SetNillableProfileID sets the "profile" edge to the UserProfile entity by ID if the given value is not nil.
+func (uu *UserUpdate) SetNillableProfileID(id *int) *UserUpdate {
 	if id != nil {
-		uu = uu.SetLoginTokensID(*id)
+		uu = uu.SetProfileID(*id)
 	}
 	return uu
 }
 
-// SetLoginTokens sets the "login_tokens" edge to the LoginToken entity.
-func (uu *UserUpdate) SetLoginTokens(l *LoginToken) *UserUpdate {
-	return uu.SetLoginTokensID(l.ID)
+// SetProfile sets the "profile" edge to the UserProfile entity.
+func (uu *UserUpdate) SetProfile(u *UserProfile) *UserUpdate {
+	return uu.SetProfileID(u.ID)
 }
 
-// SetAccountID sets the "account" edge to the UserAccount entity by ID.
-func (uu *UserUpdate) SetAccountID(id int) *UserUpdate {
-	uu.mutation.SetAccountID(id)
+// AddTokenIDs adds the "tokens" edge to the Token entity by IDs.
+func (uu *UserUpdate) AddTokenIDs(ids ...int) *UserUpdate {
+	uu.mutation.AddTokenIDs(ids...)
 	return uu
 }
 
-// SetNillableAccountID sets the "account" edge to the UserAccount entity by ID if the given value is not nil.
-func (uu *UserUpdate) SetNillableAccountID(id *int) *UserUpdate {
-	if id != nil {
-		uu = uu.SetAccountID(*id)
+// AddTokens adds the "tokens" edges to the Token entity.
+func (uu *UserUpdate) AddTokens(t ...*Token) *UserUpdate {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
 	}
-	return uu
-}
-
-// SetAccount sets the "account" edge to the UserAccount entity.
-func (uu *UserUpdate) SetAccount(u *UserAccount) *UserUpdate {
-	return uu.SetAccountID(u.ID)
+	return uu.AddTokenIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -169,21 +147,56 @@ func (uu *UserUpdate) Mutation() *UserMutation {
 	return uu.mutation
 }
 
-// ClearLoginTokens clears the "login_tokens" edge to the LoginToken entity.
-func (uu *UserUpdate) ClearLoginTokens() *UserUpdate {
-	uu.mutation.ClearLoginTokens()
+// ClearAccounts clears all "accounts" edges to the UserAccount entity.
+func (uu *UserUpdate) ClearAccounts() *UserUpdate {
+	uu.mutation.ClearAccounts()
 	return uu
 }
 
-// ClearAccount clears the "account" edge to the UserAccount entity.
-func (uu *UserUpdate) ClearAccount() *UserUpdate {
-	uu.mutation.ClearAccount()
+// RemoveAccountIDs removes the "accounts" edge to UserAccount entities by IDs.
+func (uu *UserUpdate) RemoveAccountIDs(ids ...int) *UserUpdate {
+	uu.mutation.RemoveAccountIDs(ids...)
 	return uu
+}
+
+// RemoveAccounts removes "accounts" edges to UserAccount entities.
+func (uu *UserUpdate) RemoveAccounts(u ...*UserAccount) *UserUpdate {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return uu.RemoveAccountIDs(ids...)
+}
+
+// ClearProfile clears the "profile" edge to the UserProfile entity.
+func (uu *UserUpdate) ClearProfile() *UserUpdate {
+	uu.mutation.ClearProfile()
+	return uu
+}
+
+// ClearTokens clears all "tokens" edges to the Token entity.
+func (uu *UserUpdate) ClearTokens() *UserUpdate {
+	uu.mutation.ClearTokens()
+	return uu
+}
+
+// RemoveTokenIDs removes the "tokens" edge to Token entities by IDs.
+func (uu *UserUpdate) RemoveTokenIDs(ids ...int) *UserUpdate {
+	uu.mutation.RemoveTokenIDs(ids...)
+	return uu
+}
+
+// RemoveTokens removes "tokens" edges to Token entities.
+func (uu *UserUpdate) RemoveTokens(t ...*Token) *UserUpdate {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return uu.RemoveTokenIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (uu *UserUpdate) Save(ctx context.Context) (int, error) {
-	uu.defaults()
 	return withHooks(ctx, uu.sqlSave, uu.mutation, uu.hooks)
 }
 
@@ -209,38 +222,7 @@ func (uu *UserUpdate) ExecX(ctx context.Context) {
 	}
 }
 
-// defaults sets the default values of the builder before save.
-func (uu *UserUpdate) defaults() {
-	if _, ok := uu.mutation.UpdatedAt(); !ok {
-		v := user.UpdateDefaultUpdatedAt()
-		uu.mutation.SetUpdatedAt(v)
-	}
-}
-
-// check runs all checks and user-defined validators on the builder.
-func (uu *UserUpdate) check() error {
-	if v, ok := uu.mutation.Username(); ok {
-		if err := user.UsernameValidator(v); err != nil {
-			return &ValidationError{Name: "username", err: fmt.Errorf(`ent: validator failed for field "User.username": %w`, err)}
-		}
-	}
-	if v, ok := uu.mutation.Fullname(); ok {
-		if err := user.FullnameValidator(v); err != nil {
-			return &ValidationError{Name: "fullname", err: fmt.Errorf(`ent: validator failed for field "User.fullname": %w`, err)}
-		}
-	}
-	if v, ok := uu.mutation.Password(); ok {
-		if err := user.PasswordValidator(v); err != nil {
-			return &ValidationError{Name: "password", err: fmt.Errorf(`ent: validator failed for field "User.password": %w`, err)}
-		}
-	}
-	return nil
-}
-
 func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	if err := uu.check(); err != nil {
-		return n, err
-	}
 	_spec := sqlgraph.NewUpdateSpec(user.Table, user.Columns, sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt))
 	if ps := uu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -252,49 +234,56 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := uu.mutation.Username(); ok {
 		_spec.SetField(user.FieldUsername, field.TypeString, value)
 	}
-	if value, ok := uu.mutation.Fullname(); ok {
-		_spec.SetField(user.FieldFullname, field.TypeString, value)
-	}
 	if value, ok := uu.mutation.Email(); ok {
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
 	}
 	if value, ok := uu.mutation.Password(); ok {
 		_spec.SetField(user.FieldPassword, field.TypeString, value)
 	}
-	if value, ok := uu.mutation.Birthday(); ok {
-		_spec.SetField(user.FieldBirthday, field.TypeTime, value)
+	if value, ok := uu.mutation.AccountNumber(); ok {
+		_spec.SetField(user.FieldAccountNumber, field.TypeInt64, value)
 	}
-	if uu.mutation.BirthdayCleared() {
-		_spec.ClearField(user.FieldBirthday, field.TypeTime)
+	if value, ok := uu.mutation.AddedAccountNumber(); ok {
+		_spec.AddField(user.FieldAccountNumber, field.TypeInt64, value)
 	}
-	if value, ok := uu.mutation.CreatedAt(); ok {
-		_spec.SetField(user.FieldCreatedAt, field.TypeTime, value)
-	}
-	if value, ok := uu.mutation.UpdatedAt(); ok {
-		_spec.SetField(user.FieldUpdatedAt, field.TypeTime, value)
-	}
-	if uu.mutation.LoginTokensCleared() {
+	if uu.mutation.AccountsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
-			Inverse: true,
-			Table:   user.LoginTokensTable,
-			Columns: []string{user.LoginTokensColumn},
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AccountsTable,
+			Columns: []string{user.AccountsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(logintoken.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uu.mutation.LoginTokensIDs(); len(nodes) > 0 {
+	if nodes := uu.mutation.RemovedAccountsIDs(); len(nodes) > 0 && !uu.mutation.AccountsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
-			Inverse: true,
-			Table:   user.LoginTokensTable,
-			Columns: []string{user.LoginTokensColumn},
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AccountsTable,
+			Columns: []string{user.AccountsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(logintoken.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.AccountsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AccountsTable,
+			Columns: []string{user.AccountsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -302,28 +291,73 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if uu.mutation.AccountCleared() {
+	if uu.mutation.ProfileCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
 			Inverse: false,
-			Table:   user.AccountTable,
-			Columns: []string{user.AccountColumn},
+			Table:   user.ProfileTable,
+			Columns: []string{user.ProfileColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(userprofile.FieldID, field.TypeInt),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uu.mutation.AccountIDs(); len(nodes) > 0 {
+	if nodes := uu.mutation.ProfileIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
 			Inverse: false,
-			Table:   user.AccountTable,
-			Columns: []string{user.AccountColumn},
+			Table:   user.ProfileTable,
+			Columns: []string{user.ProfileColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(userprofile.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uu.mutation.TokensCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.TokensTable,
+			Columns: []string{user.TokensColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(token.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedTokensIDs(); len(nodes) > 0 && !uu.mutation.TokensCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.TokensTable,
+			Columns: []string{user.TokensColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(token.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.TokensIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.TokensTable,
+			Columns: []string{user.TokensColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(token.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -365,20 +399,6 @@ func (uuo *UserUpdateOne) SetNillableUsername(s *string) *UserUpdateOne {
 	return uuo
 }
 
-// SetFullname sets the "fullname" field.
-func (uuo *UserUpdateOne) SetFullname(s string) *UserUpdateOne {
-	uuo.mutation.SetFullname(s)
-	return uuo
-}
-
-// SetNillableFullname sets the "fullname" field if the given value is not nil.
-func (uuo *UserUpdateOne) SetNillableFullname(s *string) *UserUpdateOne {
-	if s != nil {
-		uuo.SetFullname(*s)
-	}
-	return uuo
-}
-
 // SetEmail sets the "email" field.
 func (uuo *UserUpdateOne) SetEmail(s string) *UserUpdateOne {
 	uuo.mutation.SetEmail(s)
@@ -407,82 +427,74 @@ func (uuo *UserUpdateOne) SetNillablePassword(s *string) *UserUpdateOne {
 	return uuo
 }
 
-// SetBirthday sets the "birthday" field.
-func (uuo *UserUpdateOne) SetBirthday(t time.Time) *UserUpdateOne {
-	uuo.mutation.SetBirthday(t)
+// SetAccountNumber sets the "account_number" field.
+func (uuo *UserUpdateOne) SetAccountNumber(i int64) *UserUpdateOne {
+	uuo.mutation.ResetAccountNumber()
+	uuo.mutation.SetAccountNumber(i)
 	return uuo
 }
 
-// SetNillableBirthday sets the "birthday" field if the given value is not nil.
-func (uuo *UserUpdateOne) SetNillableBirthday(t *time.Time) *UserUpdateOne {
-	if t != nil {
-		uuo.SetBirthday(*t)
+// SetNillableAccountNumber sets the "account_number" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableAccountNumber(i *int64) *UserUpdateOne {
+	if i != nil {
+		uuo.SetAccountNumber(*i)
 	}
 	return uuo
 }
 
-// ClearBirthday clears the value of the "birthday" field.
-func (uuo *UserUpdateOne) ClearBirthday() *UserUpdateOne {
-	uuo.mutation.ClearBirthday()
+// AddAccountNumber adds i to the "account_number" field.
+func (uuo *UserUpdateOne) AddAccountNumber(i int64) *UserUpdateOne {
+	uuo.mutation.AddAccountNumber(i)
 	return uuo
 }
 
-// SetCreatedAt sets the "created_at" field.
-func (uuo *UserUpdateOne) SetCreatedAt(t time.Time) *UserUpdateOne {
-	uuo.mutation.SetCreatedAt(t)
+// AddAccountIDs adds the "accounts" edge to the UserAccount entity by IDs.
+func (uuo *UserUpdateOne) AddAccountIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.AddAccountIDs(ids...)
 	return uuo
 }
 
-// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
-func (uuo *UserUpdateOne) SetNillableCreatedAt(t *time.Time) *UserUpdateOne {
-	if t != nil {
-		uuo.SetCreatedAt(*t)
+// AddAccounts adds the "accounts" edges to the UserAccount entity.
+func (uuo *UserUpdateOne) AddAccounts(u ...*UserAccount) *UserUpdateOne {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
 	}
+	return uuo.AddAccountIDs(ids...)
+}
+
+// SetProfileID sets the "profile" edge to the UserProfile entity by ID.
+func (uuo *UserUpdateOne) SetProfileID(id int) *UserUpdateOne {
+	uuo.mutation.SetProfileID(id)
 	return uuo
 }
 
-// SetUpdatedAt sets the "updated_at" field.
-func (uuo *UserUpdateOne) SetUpdatedAt(t time.Time) *UserUpdateOne {
-	uuo.mutation.SetUpdatedAt(t)
-	return uuo
-}
-
-// SetLoginTokensID sets the "login_tokens" edge to the LoginToken entity by ID.
-func (uuo *UserUpdateOne) SetLoginTokensID(id int) *UserUpdateOne {
-	uuo.mutation.SetLoginTokensID(id)
-	return uuo
-}
-
-// SetNillableLoginTokensID sets the "login_tokens" edge to the LoginToken entity by ID if the given value is not nil.
-func (uuo *UserUpdateOne) SetNillableLoginTokensID(id *int) *UserUpdateOne {
+// SetNillableProfileID sets the "profile" edge to the UserProfile entity by ID if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableProfileID(id *int) *UserUpdateOne {
 	if id != nil {
-		uuo = uuo.SetLoginTokensID(*id)
+		uuo = uuo.SetProfileID(*id)
 	}
 	return uuo
 }
 
-// SetLoginTokens sets the "login_tokens" edge to the LoginToken entity.
-func (uuo *UserUpdateOne) SetLoginTokens(l *LoginToken) *UserUpdateOne {
-	return uuo.SetLoginTokensID(l.ID)
+// SetProfile sets the "profile" edge to the UserProfile entity.
+func (uuo *UserUpdateOne) SetProfile(u *UserProfile) *UserUpdateOne {
+	return uuo.SetProfileID(u.ID)
 }
 
-// SetAccountID sets the "account" edge to the UserAccount entity by ID.
-func (uuo *UserUpdateOne) SetAccountID(id int) *UserUpdateOne {
-	uuo.mutation.SetAccountID(id)
+// AddTokenIDs adds the "tokens" edge to the Token entity by IDs.
+func (uuo *UserUpdateOne) AddTokenIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.AddTokenIDs(ids...)
 	return uuo
 }
 
-// SetNillableAccountID sets the "account" edge to the UserAccount entity by ID if the given value is not nil.
-func (uuo *UserUpdateOne) SetNillableAccountID(id *int) *UserUpdateOne {
-	if id != nil {
-		uuo = uuo.SetAccountID(*id)
+// AddTokens adds the "tokens" edges to the Token entity.
+func (uuo *UserUpdateOne) AddTokens(t ...*Token) *UserUpdateOne {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
 	}
-	return uuo
-}
-
-// SetAccount sets the "account" edge to the UserAccount entity.
-func (uuo *UserUpdateOne) SetAccount(u *UserAccount) *UserUpdateOne {
-	return uuo.SetAccountID(u.ID)
+	return uuo.AddTokenIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -490,16 +502,52 @@ func (uuo *UserUpdateOne) Mutation() *UserMutation {
 	return uuo.mutation
 }
 
-// ClearLoginTokens clears the "login_tokens" edge to the LoginToken entity.
-func (uuo *UserUpdateOne) ClearLoginTokens() *UserUpdateOne {
-	uuo.mutation.ClearLoginTokens()
+// ClearAccounts clears all "accounts" edges to the UserAccount entity.
+func (uuo *UserUpdateOne) ClearAccounts() *UserUpdateOne {
+	uuo.mutation.ClearAccounts()
 	return uuo
 }
 
-// ClearAccount clears the "account" edge to the UserAccount entity.
-func (uuo *UserUpdateOne) ClearAccount() *UserUpdateOne {
-	uuo.mutation.ClearAccount()
+// RemoveAccountIDs removes the "accounts" edge to UserAccount entities by IDs.
+func (uuo *UserUpdateOne) RemoveAccountIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.RemoveAccountIDs(ids...)
 	return uuo
+}
+
+// RemoveAccounts removes "accounts" edges to UserAccount entities.
+func (uuo *UserUpdateOne) RemoveAccounts(u ...*UserAccount) *UserUpdateOne {
+	ids := make([]int, len(u))
+	for i := range u {
+		ids[i] = u[i].ID
+	}
+	return uuo.RemoveAccountIDs(ids...)
+}
+
+// ClearProfile clears the "profile" edge to the UserProfile entity.
+func (uuo *UserUpdateOne) ClearProfile() *UserUpdateOne {
+	uuo.mutation.ClearProfile()
+	return uuo
+}
+
+// ClearTokens clears all "tokens" edges to the Token entity.
+func (uuo *UserUpdateOne) ClearTokens() *UserUpdateOne {
+	uuo.mutation.ClearTokens()
+	return uuo
+}
+
+// RemoveTokenIDs removes the "tokens" edge to Token entities by IDs.
+func (uuo *UserUpdateOne) RemoveTokenIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.RemoveTokenIDs(ids...)
+	return uuo
+}
+
+// RemoveTokens removes "tokens" edges to Token entities.
+func (uuo *UserUpdateOne) RemoveTokens(t ...*Token) *UserUpdateOne {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return uuo.RemoveTokenIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -517,7 +565,6 @@ func (uuo *UserUpdateOne) Select(field string, fields ...string) *UserUpdateOne 
 
 // Save executes the query and returns the updated User entity.
 func (uuo *UserUpdateOne) Save(ctx context.Context) (*User, error) {
-	uuo.defaults()
 	return withHooks(ctx, uuo.sqlSave, uuo.mutation, uuo.hooks)
 }
 
@@ -543,38 +590,7 @@ func (uuo *UserUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
-// defaults sets the default values of the builder before save.
-func (uuo *UserUpdateOne) defaults() {
-	if _, ok := uuo.mutation.UpdatedAt(); !ok {
-		v := user.UpdateDefaultUpdatedAt()
-		uuo.mutation.SetUpdatedAt(v)
-	}
-}
-
-// check runs all checks and user-defined validators on the builder.
-func (uuo *UserUpdateOne) check() error {
-	if v, ok := uuo.mutation.Username(); ok {
-		if err := user.UsernameValidator(v); err != nil {
-			return &ValidationError{Name: "username", err: fmt.Errorf(`ent: validator failed for field "User.username": %w`, err)}
-		}
-	}
-	if v, ok := uuo.mutation.Fullname(); ok {
-		if err := user.FullnameValidator(v); err != nil {
-			return &ValidationError{Name: "fullname", err: fmt.Errorf(`ent: validator failed for field "User.fullname": %w`, err)}
-		}
-	}
-	if v, ok := uuo.mutation.Password(); ok {
-		if err := user.PasswordValidator(v); err != nil {
-			return &ValidationError{Name: "password", err: fmt.Errorf(`ent: validator failed for field "User.password": %w`, err)}
-		}
-	}
-	return nil
-}
-
 func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
-	if err := uuo.check(); err != nil {
-		return _node, err
-	}
 	_spec := sqlgraph.NewUpdateSpec(user.Table, user.Columns, sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt))
 	id, ok := uuo.mutation.ID()
 	if !ok {
@@ -603,49 +619,56 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	if value, ok := uuo.mutation.Username(); ok {
 		_spec.SetField(user.FieldUsername, field.TypeString, value)
 	}
-	if value, ok := uuo.mutation.Fullname(); ok {
-		_spec.SetField(user.FieldFullname, field.TypeString, value)
-	}
 	if value, ok := uuo.mutation.Email(); ok {
 		_spec.SetField(user.FieldEmail, field.TypeString, value)
 	}
 	if value, ok := uuo.mutation.Password(); ok {
 		_spec.SetField(user.FieldPassword, field.TypeString, value)
 	}
-	if value, ok := uuo.mutation.Birthday(); ok {
-		_spec.SetField(user.FieldBirthday, field.TypeTime, value)
+	if value, ok := uuo.mutation.AccountNumber(); ok {
+		_spec.SetField(user.FieldAccountNumber, field.TypeInt64, value)
 	}
-	if uuo.mutation.BirthdayCleared() {
-		_spec.ClearField(user.FieldBirthday, field.TypeTime)
+	if value, ok := uuo.mutation.AddedAccountNumber(); ok {
+		_spec.AddField(user.FieldAccountNumber, field.TypeInt64, value)
 	}
-	if value, ok := uuo.mutation.CreatedAt(); ok {
-		_spec.SetField(user.FieldCreatedAt, field.TypeTime, value)
-	}
-	if value, ok := uuo.mutation.UpdatedAt(); ok {
-		_spec.SetField(user.FieldUpdatedAt, field.TypeTime, value)
-	}
-	if uuo.mutation.LoginTokensCleared() {
+	if uuo.mutation.AccountsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
-			Inverse: true,
-			Table:   user.LoginTokensTable,
-			Columns: []string{user.LoginTokensColumn},
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AccountsTable,
+			Columns: []string{user.AccountsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(logintoken.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uuo.mutation.LoginTokensIDs(); len(nodes) > 0 {
+	if nodes := uuo.mutation.RemovedAccountsIDs(); len(nodes) > 0 && !uuo.mutation.AccountsCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2O,
-			Inverse: true,
-			Table:   user.LoginTokensTable,
-			Columns: []string{user.LoginTokensColumn},
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AccountsTable,
+			Columns: []string{user.AccountsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(logintoken.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.AccountsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AccountsTable,
+			Columns: []string{user.AccountsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -653,28 +676,73 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if uuo.mutation.AccountCleared() {
+	if uuo.mutation.ProfileCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
 			Inverse: false,
-			Table:   user.AccountTable,
-			Columns: []string{user.AccountColumn},
+			Table:   user.ProfileTable,
+			Columns: []string{user.ProfileColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(userprofile.FieldID, field.TypeInt),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uuo.mutation.AccountIDs(); len(nodes) > 0 {
+	if nodes := uuo.mutation.ProfileIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
 			Inverse: false,
-			Table:   user.AccountTable,
-			Columns: []string{user.AccountColumn},
+			Table:   user.ProfileTable,
+			Columns: []string{user.ProfileColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+				IDSpec: sqlgraph.NewFieldSpec(userprofile.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uuo.mutation.TokensCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.TokensTable,
+			Columns: []string{user.TokensColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(token.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedTokensIDs(); len(nodes) > 0 && !uuo.mutation.TokensCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.TokensTable,
+			Columns: []string{user.TokensColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(token.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.TokensIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.TokensTable,
+			Columns: []string{user.TokensColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(token.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

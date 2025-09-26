@@ -6,9 +6,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"comb.com/banking/ent/transaction"
+	"comb.com/banking/ent/useraccount"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 )
@@ -20,28 +20,29 @@ type TransactionCreate struct {
 	hooks    []Hook
 }
 
-// SetTransactionTime sets the "TransactionTime" field.
-func (tc *TransactionCreate) SetTransactionTime(t time.Time) *TransactionCreate {
-	tc.mutation.SetTransactionTime(t)
-	return tc
-}
-
-// SetFrom sets the "From" field.
-func (tc *TransactionCreate) SetFrom(i int) *TransactionCreate {
-	tc.mutation.SetFrom(i)
-	return tc
-}
-
-// SetTo sets the "To" field.
-func (tc *TransactionCreate) SetTo(i int) *TransactionCreate {
-	tc.mutation.SetTo(i)
-	return tc
-}
-
-// SetAmount sets the "Amount" field.
+// SetAmount sets the "amount" field.
 func (tc *TransactionCreate) SetAmount(i int) *TransactionCreate {
 	tc.mutation.SetAmount(i)
 	return tc
+}
+
+// SetAccountID sets the "account" edge to the UserAccount entity by ID.
+func (tc *TransactionCreate) SetAccountID(id int) *TransactionCreate {
+	tc.mutation.SetAccountID(id)
+	return tc
+}
+
+// SetNillableAccountID sets the "account" edge to the UserAccount entity by ID if the given value is not nil.
+func (tc *TransactionCreate) SetNillableAccountID(id *int) *TransactionCreate {
+	if id != nil {
+		tc = tc.SetAccountID(*id)
+	}
+	return tc
+}
+
+// SetAccount sets the "account" edge to the UserAccount entity.
+func (tc *TransactionCreate) SetAccount(u *UserAccount) *TransactionCreate {
+	return tc.SetAccountID(u.ID)
 }
 
 // Mutation returns the TransactionMutation object of the builder.
@@ -78,17 +79,8 @@ func (tc *TransactionCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (tc *TransactionCreate) check() error {
-	if _, ok := tc.mutation.TransactionTime(); !ok {
-		return &ValidationError{Name: "TransactionTime", err: errors.New(`ent: missing required field "Transaction.TransactionTime"`)}
-	}
-	if _, ok := tc.mutation.From(); !ok {
-		return &ValidationError{Name: "From", err: errors.New(`ent: missing required field "Transaction.From"`)}
-	}
-	if _, ok := tc.mutation.To(); !ok {
-		return &ValidationError{Name: "To", err: errors.New(`ent: missing required field "Transaction.To"`)}
-	}
 	if _, ok := tc.mutation.Amount(); !ok {
-		return &ValidationError{Name: "Amount", err: errors.New(`ent: missing required field "Transaction.Amount"`)}
+		return &ValidationError{Name: "amount", err: errors.New(`ent: missing required field "Transaction.amount"`)}
 	}
 	return nil
 }
@@ -116,21 +108,26 @@ func (tc *TransactionCreate) createSpec() (*Transaction, *sqlgraph.CreateSpec) {
 		_node = &Transaction{config: tc.config}
 		_spec = sqlgraph.NewCreateSpec(transaction.Table, sqlgraph.NewFieldSpec(transaction.FieldID, field.TypeInt))
 	)
-	if value, ok := tc.mutation.TransactionTime(); ok {
-		_spec.SetField(transaction.FieldTransactionTime, field.TypeTime, value)
-		_node.TransactionTime = value
-	}
-	if value, ok := tc.mutation.From(); ok {
-		_spec.SetField(transaction.FieldFrom, field.TypeInt, value)
-		_node.From = value
-	}
-	if value, ok := tc.mutation.To(); ok {
-		_spec.SetField(transaction.FieldTo, field.TypeInt, value)
-		_node.To = value
-	}
 	if value, ok := tc.mutation.Amount(); ok {
 		_spec.SetField(transaction.FieldAmount, field.TypeInt, value)
 		_node.Amount = value
+	}
+	if nodes := tc.mutation.AccountIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   transaction.AccountTable,
+			Columns: []string{transaction.AccountColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.user_account_transactions = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

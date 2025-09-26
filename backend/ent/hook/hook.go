@@ -9,16 +9,16 @@ import (
 	"comb.com/banking/ent"
 )
 
-// The LoginTokenFunc type is an adapter to allow the use of ordinary
-// function as LoginToken mutator.
-type LoginTokenFunc func(context.Context, *ent.LoginTokenMutation) (ent.Value, error)
+// The TokenFunc type is an adapter to allow the use of ordinary
+// function as Token mutator.
+type TokenFunc func(context.Context, *ent.TokenMutation) (ent.Value, error)
 
 // Mutate calls f(ctx, m).
-func (f LoginTokenFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.LoginTokenMutation); ok {
+func (f TokenFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.TokenMutation); ok {
 		return f(ctx, mv)
 	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.LoginTokenMutation", m)
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TokenMutation", m)
 }
 
 // The TransactionFunc type is an adapter to allow the use of ordinary
@@ -31,6 +31,18 @@ func (f TransactionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value,
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TransactionMutation", m)
+}
+
+// The TransferFunc type is an adapter to allow the use of ordinary
+// function as Transfer mutator.
+type TransferFunc func(context.Context, *ent.TransferMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f TransferFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.TransferMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TransferMutation", m)
 }
 
 // The UserFunc type is an adapter to allow the use of ordinary
@@ -55,6 +67,18 @@ func (f UserAccountFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value,
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.UserAccountMutation", m)
+}
+
+// The UserProfileFunc type is an adapter to allow the use of ordinary
+// function as UserProfile mutator.
+type UserProfileFunc func(context.Context, *ent.UserProfileMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f UserProfileFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.UserProfileMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.UserProfileMutation", m)
 }
 
 // Condition is a hook condition function.

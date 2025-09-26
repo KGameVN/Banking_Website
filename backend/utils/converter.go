@@ -1,0 +1,19 @@
+package utils
+
+import "strconv"
+
+func StringToInt(in string) (int, error) {
+	number, err := strconv.Atoi(in)
+	if err != nil {
+		return -1, err
+	}
+	return number, nil
+}
+
+func StringToInt64(in string) (int64, error) {
+	number, err := strconv.ParseInt(in, 10, 64)
+	if err != nil {
+		return -1, err
+	}
+	return number, nil
+}
