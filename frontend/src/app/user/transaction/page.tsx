@@ -3,14 +3,21 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import style from '../../styles/componentstyle/defaultbuttonstyle.module.css';
 import Button from '../../components/button/button'
 import axios from "axios";
 
 export default function Transaction() {
   const [amount, setAmount] = useState("");
-  let accountNumber = localStorage.getItem("accountNumber") // get account number from local storage
+  const [accountNumber, setAccountNumber] = useState<string | null>(null);
+
+  useEffect(() => {
+    const acc = localStorage.getItem("accountNumber");
+    setAccountNumber(acc);
+  }, []);
+
+  // const accountNumber = localStorage.getItem("accountNumber") // get account number from local storage
   const handleWithDraw = async () => {
 
     const res = await axios.post(`/api/transaction/${accountNumber}`, { amount: 300 });
