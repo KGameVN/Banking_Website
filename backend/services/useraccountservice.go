@@ -7,12 +7,12 @@ import (
 	"comb.com/banking/ent/user"
 	"comb.com/banking/ent/useraccount"
 	"comb.com/banking/errors"
-	"comb.com/banking/utils"
+	"comb.com/banking/utils/converter"
 	"github.com/labstack/echo/v4"
 )
 
 func (s *Service) GetAccountInfo(c echo.Context) error {
-	userID, err := utils.StringToInt64(c.Param("id"))
+	userID, err := converter.StringToInt64(c.Param("id"))
 	if err != nil {
 		return &errors.AppError{Code: errors.ErrIDIsNotValid.Code, 
 			Message: errors.ErrAccountNotFound.Message, Err: err}
@@ -38,7 +38,7 @@ func (s *Service) GetAccountInfo(c echo.Context) error {
 }
 
 func (s Service) Transaction(c echo.Context) error {
-	userID, err := utils.StringToInt64(c.Param("id"))
+	userID, err := converter.StringToInt64(c.Param("id"))
 	if err != nil {
 		return &errors.AppError{Code: errors.ErrIDIsNotValid.Code, 
 			Message: errors.ErrAccountNotFound.Message, Err: err}

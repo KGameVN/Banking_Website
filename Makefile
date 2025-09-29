@@ -1,6 +1,8 @@
 # Tải biến môi trường từ .env
-include .env
-export $(shell sed 's/=.*//' .env)
+ifneq (,$(wildcard .env))
+    include .env
+    export
+endif
 
 ENV ?= dev
 
@@ -54,7 +56,7 @@ run-frontend-local:
 
 # Chạy dev bằng Docker Compose
 run-dev:
-	ENV=dev DB_HOST=$(DB_HOST_DEV) docker-compose --profile down
-	ENV=dev DB_HOST=$(DB_HOST_DEV) docker-compose --profile dev up -d --build
+	docker-compose --profile down
+	docker-compose --profile dev up -d --build
 
 # Chạy production
