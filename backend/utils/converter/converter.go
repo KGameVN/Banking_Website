@@ -1,6 +1,9 @@
-package utils
+package converter
 
-import "strconv"
+import (
+	"strconv"
+	"github.com/labstack/echo/v4"
+)
 
 func StringToInt(in string) (int, error) {
 	number, err := strconv.Atoi(in)
@@ -16,4 +19,12 @@ func StringToInt64(in string) (int64, error) {
 		return -1, err
 	}
 	return number, nil
+}
+
+func JsonToMap(c echo.Context) (map[string]interface{}, error) {
+	var input map[string]interface{}
+	if err := c.Bind(&input); err != nil {
+		return nil, err
+	}
+	return input, nil
 }

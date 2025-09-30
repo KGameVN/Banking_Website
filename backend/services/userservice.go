@@ -8,13 +8,14 @@ import (
 	"comb.com/banking/ent"
 	"comb.com/banking/ent/token"
 	"comb.com/banking/ent/user"
-	"comb.com/banking/utils"
+	"comb.com/banking/utils/converter"
+	"comb.com/banking/utils/jwt"
 	"github.com/labstack/echo/v4"
 )
 
 func (s Service) Login(c echo.Context) error {
 	// Lấy dữ liệu JSON từ body
-	body, err := utils.JsonToMap(c)
+	body, err := converter.JsonToMap(c)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "Invalid input"})
 	}
@@ -51,7 +52,7 @@ func (s Service) Login(c echo.Context) error {
 
 	if len(foundUser.Edges.Tokens) == 0 {
 		// jwt
-		token, err := utils.GenerateJWT(foundUser.Username, password)
+		token, err := jwt.GenerateJWT(foundUser.Username, password)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, echo.Map{"error": "Could not generate token"})
 		}

@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"strings"
 
-	"comb.com/banking/utils"
-	"github.com/labstack/echo/v4"
+	"comb.com/banking/utils/jwt"
+	echo "github.com/labstack/echo/v4"
 
 	"fmt"
 )
@@ -19,7 +19,7 @@ func JWTMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 
 		tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-		claims, err := utils.ParseJWT(tokenStr)
+		claims, err := jwt.ParseJWT(tokenStr)
 		if err != nil {
 			return c.JSON(http.StatusUnauthorized, echo.Map{"error": err})
 		}
