@@ -1,5 +1,4 @@
-# Tải biến môi trường từ .eninclude .env
-
+# Tải biến môi trường từ .env
 ifneq (,$(wildcard .env))
     include .env
     export
