@@ -24,7 +24,6 @@ func SeedData(ctx context.Context, client *ent.Client) {
 		SetUsername("User1").
 		SetEmail("user@test.com").
 		SetPassword("1234").
-		SetAccountNumber(1).
 		Save(ctx)
 	if err != nil {
 		log.Fatalf("failed creating user1: %v", err)
@@ -34,7 +33,6 @@ func SeedData(ctx context.Context, client *ent.Client) {
 		SetUsername("User2").
 		SetEmail("user2@test.com").
 		SetPassword("1111").
-		SetAccountNumber(200).
 		Save(ctx)
 	if err != nil {
 		log.Fatalf("failed creating user2: %v", err)
@@ -42,18 +40,18 @@ func SeedData(ctx context.Context, client *ent.Client) {
 
 	// --- Accounts ---
 	acc1, err := client.UserAccount.Create().
-		SetAccountNumber(1).
 		SetBalance(100).
 		SetUser(u1).
+		SetAccountNumber(1111).  // thêm account number
 		Save(ctx)
 	if err != nil {
 		log.Fatalf("failed creating account1: %v", err)
 	}
 
 	acc2, err := client.UserAccount.Create().
-		SetAccountNumber(200).
 		SetBalance(1000).
 		SetUser(u2).
+		SetAccountNumber(2222).  // thêm account number
 		Save(ctx)
 	if err != nil {
 		log.Fatalf("failed creating account2: %v", err)

@@ -10,6 +10,7 @@ import (
 
 	"comb.com/banking/ent/predicate"
 	"comb.com/banking/ent/transaction"
+	"comb.com/banking/ent/transactionhistory"
 	"comb.com/banking/ent/transfer"
 	"comb.com/banking/ent/user"
 	"comb.com/banking/ent/useraccount"
@@ -30,6 +31,7 @@ type UserAccountQuery struct {
 	withTransactions      *TransactionQuery
 	withOutgoingTransfers *TransferQuery
 	withIncomingTransfers *TransferQuery
+	withAccountNumberID   *TransactionHistoryQuery
 	withFKs               bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -81,7 +83,7 @@ func (uaq *UserAccountQuery) QueryUser() *UserQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(useraccount.Table, useraccount.FieldID, selector),
 			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, useraccount.UserTable, useraccount.UserColumn),
+			sqlgraph.Edge(sqlgraph.O2O, true, useraccount.UserTable, useraccount.UserColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(uaq.driver.Dialect(), step)
 		return fromU, nil
@@ -148,6 +150,28 @@ func (uaq *UserAccountQuery) QueryIncomingTransfers() *TransferQuery {
 			sqlgraph.From(useraccount.Table, useraccount.FieldID, selector),
 			sqlgraph.To(transfer.Table, transfer.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, useraccount.IncomingTransfersTable, useraccount.IncomingTransfersColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(uaq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryAccountNumberID chains the current query on the "account_number_id" edge.
+func (uaq *UserAccountQuery) QueryAccountNumberID() *TransactionHistoryQuery {
+	query := (&TransactionHistoryClient{config: uaq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := uaq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := uaq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(useraccount.Table, useraccount.FieldID, selector),
+			sqlgraph.To(transactionhistory.Table, transactionhistory.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, useraccount.AccountNumberIDTable, useraccount.AccountNumberIDColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(uaq.driver.Dialect(), step)
 		return fromU, nil
@@ -351,6 +375,7 @@ func (uaq *UserAccountQuery) Clone() *UserAccountQuery {
 		withTransactions:      uaq.withTransactions.Clone(),
 		withOutgoingTransfers: uaq.withOutgoingTransfers.Clone(),
 		withIncomingTransfers: uaq.withIncomingTransfers.Clone(),
+		withAccountNumberID:   uaq.withAccountNumberID.Clone(),
 		// clone intermediate query.
 		sql:  uaq.sql.Clone(),
 		path: uaq.path,
@@ -401,18 +426,29 @@ func (uaq *UserAccountQuery) WithIncomingTransfers(opts ...func(*TransferQuery))
 	return uaq
 }
 
+// WithAccountNumberID tells the query-builder to eager-load the nodes that are connected to
+// the "account_number_id" edge. The optional arguments are used to configure the query builder of the edge.
+func (uaq *UserAccountQuery) WithAccountNumberID(opts ...func(*TransactionHistoryQuery)) *UserAccountQuery {
+	query := (&TransactionHistoryClient{config: uaq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	uaq.withAccountNumberID = query
+	return uaq
+}
+
 // GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
 // Example:
 //
 //	var v []struct {
-//		AccountNumber int64 `json:"account_number,omitempty"`
+//		Balance int64 `json:"balance,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.UserAccount.Query().
-//		GroupBy(useraccount.FieldAccountNumber).
+//		GroupBy(useraccount.FieldBalance).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (uaq *UserAccountQuery) GroupBy(field string, fields ...string) *UserAccountGroupBy {
@@ -430,11 +466,11 @@ func (uaq *UserAccountQuery) GroupBy(field string, fields ...string) *UserAccoun
 // Example:
 //
 //	var v []struct {
-//		AccountNumber int64 `json:"account_number,omitempty"`
+//		Balance int64 `json:"balance,omitempty"`
 //	}
 //
 //	client.UserAccount.Query().
-//		Select(useraccount.FieldAccountNumber).
+//		Select(useraccount.FieldBalance).
 //		Scan(ctx, &v)
 func (uaq *UserAccountQuery) Select(fields ...string) *UserAccountSelect {
 	uaq.ctx.Fields = append(uaq.ctx.Fields, fields...)
@@ -480,11 +516,12 @@ func (uaq *UserAccountQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 		nodes       = []*UserAccount{}
 		withFKs     = uaq.withFKs
 		_spec       = uaq.querySpec()
-		loadedTypes = [4]bool{
+		loadedTypes = [5]bool{
 			uaq.withUser != nil,
 			uaq.withTransactions != nil,
 			uaq.withOutgoingTransfers != nil,
 			uaq.withIncomingTransfers != nil,
+			uaq.withAccountNumberID != nil,
 		}
 	)
 	if uaq.withUser != nil {
@@ -538,6 +575,15 @@ func (uaq *UserAccountQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]
 			return nil, err
 		}
 	}
+	if query := uaq.withAccountNumberID; query != nil {
+		if err := uaq.loadAccountNumberID(ctx, query, nodes,
+			func(n *UserAccount) { n.Edges.AccountNumberID = []*TransactionHistory{} },
+			func(n *UserAccount, e *TransactionHistory) {
+				n.Edges.AccountNumberID = append(n.Edges.AccountNumberID, e)
+			}); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
 }
 
@@ -545,10 +591,10 @@ func (uaq *UserAccountQuery) loadUser(ctx context.Context, query *UserQuery, nod
 	ids := make([]int, 0, len(nodes))
 	nodeids := make(map[int][]*UserAccount)
 	for i := range nodes {
-		if nodes[i].user_accounts == nil {
+		if nodes[i].user_user_id == nil {
 			continue
 		}
-		fk := *nodes[i].user_accounts
+		fk := *nodes[i].user_user_id
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -565,7 +611,7 @@ func (uaq *UserAccountQuery) loadUser(ctx context.Context, query *UserQuery, nod
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "user_accounts" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "user_user_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -661,6 +707,36 @@ func (uaq *UserAccountQuery) loadIncomingTransfers(ctx context.Context, query *T
 		node, ok := nodeids[*fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "user_account_incoming_transfers" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (uaq *UserAccountQuery) loadAccountNumberID(ctx context.Context, query *TransactionHistoryQuery, nodes []*UserAccount, init func(*UserAccount), assign func(*UserAccount, *TransactionHistory)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int]*UserAccount)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(transactionhistory.FieldAccountNumberID)
+	}
+	query.Where(predicate.TransactionHistory(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(useraccount.AccountNumberIDColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.AccountNumberID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "account_number_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}

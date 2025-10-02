@@ -1,18 +1,21 @@
 package services
 
 import (
+	"fmt"
 	"net/http"
 
 	"comb.com/banking/api"
+	"comb.com/banking/ent/transactionhistory"
 	"comb.com/banking/ent/user"
 	"comb.com/banking/ent/useraccount"
-	"comb.com/banking/errors"
+	"comb.com/banking/internal/errors"
 	"comb.com/banking/utils/converter"
 	"github.com/labstack/echo/v4"
+	// "github.com/segmentio/kafka-go"
 )
 
 func (s *Service) GetAccountInfo(c echo.Context) error {
-	userID, err := converter.StringToInt64(c.Param("id"))
+	userAccount, err := converter.StringToInt64(c.Param("account"))
 	if err != nil {
 		return &errors.AppError{Code: errors.ErrIDIsNotValid.Code, 
 			Message: errors.ErrAccountNotFound.Message, Err: err}
@@ -22,7 +25,7 @@ func (s *Service) GetAccountInfo(c echo.Context) error {
 
 	account, err := s.Repository.DbClient.UserAccount.
 		Query().
-		Where(useraccount.HasUserWith(user.AccountNumber(userID))).
+		Where(useraccount.HasUserWith(user.ID(int(userAccount)))).
 		Only(ctx)
 
 	if err != nil {
@@ -31,14 +34,14 @@ func (s *Service) GetAccountInfo(c echo.Context) error {
 	}
 
 	return api.Success(c, echo.Map{
-		"account_number": account.AccountNumber,
+		"user_account":   account.Edges.User,
 		"balance":        account.Balance,
 	})
 
 }
 
 func (s Service) Transaction(c echo.Context) error {
-	userID, err := converter.StringToInt64(c.Param("id"))
+	userAccount, err := converter.StringToInt64(c.Param("account"))
 	if err != nil {
 		return &errors.AppError{Code: errors.ErrIDIsNotValid.Code, 
 			Message: errors.ErrAccountNotFound.Message, Err: err}
@@ -59,7 +62,7 @@ func (s Service) Transaction(c echo.Context) error {
 
 	account, err := s.Repository.DbClient.UserAccount.
 		Query().
-		Where(useraccount.HasUserWith(user.AccountNumber(userID))).
+		Where(useraccount.AccountNumber(userAccount)).
 		Only(ctx)
 	if err != nil {
 		return &errors.AppError{Code: errors.ErrAccountNotFound.Code, 
@@ -92,8 +95,8 @@ func (s Service) Transfer(c echo.Context) error {
 	// userID := c.Get("userID").(int)
 
 	type Request struct {
-		FromAccountNumber int64 `json:"from_account_number"`
-		ToAccountNumber   int   `json:"to_account_number"`
+		FromAccount int `json:"from_account_number"`
+		ToAccount   int   `json:"to_account_number"`
 		Amount            int64 `json:"amount"`
 	}
 
@@ -119,7 +122,7 @@ func (s Service) Transfer(c echo.Context) error {
 	// Tài khoản gửi
 	fromAcc, err := tx.UserAccount.
 		Query().
-		Where(useraccount.HasUserWith(user.AccountNumber(200))).
+		Where(useraccount.AccountNumberEQ(int64(req.FromAccount))).
 		Only(ctx)
 	if err != nil {
 		_ = tx.Rollback()
@@ -129,7 +132,7 @@ func (s Service) Transfer(c echo.Context) error {
 	// Tài khoản nhận
 	toAcc, err := tx.UserAccount.
 		Query().
-		Where(useraccount.AccountNumberEQ(int64(req.ToAccountNumber))).
+		Where(useraccount.AccountNumberEQ(int64(req.ToAccount))).
 		Only(ctx)
 	if err != nil {
 		_ = tx.Rollback()
@@ -177,3 +180,32 @@ func (s Service) Transfer(c echo.Context) error {
 		"message": "Chuyển khoản thành công",
 	})
 }
+
+
+func (s *Service) GetTransHistory(c echo.Context) error {
+	userAccount, err := converter.StringToInt64(c.Param("account"))
+	if err != nil {
+		return &errors.AppError{Code: errors.ErrIDIsNotValid.Code, 
+			Message: errors.ErrAccountNotFound.Message, Err: err}
+	}
+
+
+	ctx := c.Request().Context()
+
+	account, err := s.Repository.DbClient.UserAccount.
+		Query().
+		Where(useraccount.AccountNumberEQ(userAccount)).
+		WithAccountNumberID().  // eager load transactions
+		Only(ctx)
+	if err != nil {
+		return &errors.AppError{Code: errors.ErrAccountNotFound.Code, 
+			Message: errors.ErrAccountNotFound.Message, Err: err}
+	}
+
+	fmt.Println(account)
+
+	return c.JSON(http.StatusOK, echo.Map{
+		"message": "GetTransHistory",
+	})
+}
+

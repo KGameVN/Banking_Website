@@ -8,6 +8,7 @@ import (
 	"fmt"
 
 	"comb.com/banking/ent/transaction"
+	"comb.com/banking/ent/transactionhistory"
 	"comb.com/banking/ent/transfer"
 	"comb.com/banking/ent/user"
 	"comb.com/banking/ent/useraccount"
@@ -22,29 +23,21 @@ type UserAccountCreate struct {
 	hooks    []Hook
 }
 
-// SetAccountNumber sets the "account_number" field.
-func (uac *UserAccountCreate) SetAccountNumber(i int64) *UserAccountCreate {
-	uac.mutation.SetAccountNumber(i)
-	return uac
-}
-
 // SetBalance sets the "balance" field.
 func (uac *UserAccountCreate) SetBalance(i int64) *UserAccountCreate {
 	uac.mutation.SetBalance(i)
 	return uac
 }
 
-// SetUserID sets the "user" edge to the User entity by ID.
-func (uac *UserAccountCreate) SetUserID(id int) *UserAccountCreate {
-	uac.mutation.SetUserID(id)
+// SetAccountNumber sets the "account_number" field.
+func (uac *UserAccountCreate) SetAccountNumber(i int64) *UserAccountCreate {
+	uac.mutation.SetAccountNumber(i)
 	return uac
 }
 
-// SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
-func (uac *UserAccountCreate) SetNillableUserID(id *int) *UserAccountCreate {
-	if id != nil {
-		uac = uac.SetUserID(*id)
-	}
+// SetUserID sets the "user" edge to the User entity by ID.
+func (uac *UserAccountCreate) SetUserID(id int) *UserAccountCreate {
+	uac.mutation.SetUserID(id)
 	return uac
 }
 
@@ -98,6 +91,21 @@ func (uac *UserAccountCreate) AddIncomingTransfers(t ...*Transfer) *UserAccountC
 	return uac.AddIncomingTransferIDs(ids...)
 }
 
+// AddAccountNumberIDIDs adds the "account_number_id" edge to the TransactionHistory entity by IDs.
+func (uac *UserAccountCreate) AddAccountNumberIDIDs(ids ...int) *UserAccountCreate {
+	uac.mutation.AddAccountNumberIDIDs(ids...)
+	return uac
+}
+
+// AddAccountNumberID adds the "account_number_id" edges to the TransactionHistory entity.
+func (uac *UserAccountCreate) AddAccountNumberID(t ...*TransactionHistory) *UserAccountCreate {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return uac.AddAccountNumberIDIDs(ids...)
+}
+
 // Mutation returns the UserAccountMutation object of the builder.
 func (uac *UserAccountCreate) Mutation() *UserAccountMutation {
 	return uac.mutation
@@ -132,11 +140,14 @@ func (uac *UserAccountCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (uac *UserAccountCreate) check() error {
+	if _, ok := uac.mutation.Balance(); !ok {
+		return &ValidationError{Name: "balance", err: errors.New(`ent: missing required field "UserAccount.balance"`)}
+	}
 	if _, ok := uac.mutation.AccountNumber(); !ok {
 		return &ValidationError{Name: "account_number", err: errors.New(`ent: missing required field "UserAccount.account_number"`)}
 	}
-	if _, ok := uac.mutation.Balance(); !ok {
-		return &ValidationError{Name: "balance", err: errors.New(`ent: missing required field "UserAccount.balance"`)}
+	if len(uac.mutation.UserIDs()) == 0 {
+		return &ValidationError{Name: "user", err: errors.New(`ent: missing required edge "UserAccount.user"`)}
 	}
 	return nil
 }
@@ -164,17 +175,17 @@ func (uac *UserAccountCreate) createSpec() (*UserAccount, *sqlgraph.CreateSpec) 
 		_node = &UserAccount{config: uac.config}
 		_spec = sqlgraph.NewCreateSpec(useraccount.Table, sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt))
 	)
-	if value, ok := uac.mutation.AccountNumber(); ok {
-		_spec.SetField(useraccount.FieldAccountNumber, field.TypeInt64, value)
-		_node.AccountNumber = value
-	}
 	if value, ok := uac.mutation.Balance(); ok {
 		_spec.SetField(useraccount.FieldBalance, field.TypeInt64, value)
 		_node.Balance = value
 	}
+	if value, ok := uac.mutation.AccountNumber(); ok {
+		_spec.SetField(useraccount.FieldAccountNumber, field.TypeInt64, value)
+		_node.AccountNumber = value
+	}
 	if nodes := uac.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: true,
 			Table:   useraccount.UserTable,
 			Columns: []string{useraccount.UserColumn},
@@ -186,7 +197,7 @@ func (uac *UserAccountCreate) createSpec() (*UserAccount, *sqlgraph.CreateSpec) 
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.user_accounts = &nodes[0]
+		_node.user_user_id = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := uac.mutation.TransactionsIDs(); len(nodes) > 0 {
@@ -230,6 +241,22 @@ func (uac *UserAccountCreate) createSpec() (*UserAccount, *sqlgraph.CreateSpec) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(transfer.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uac.mutation.AccountNumberIDIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   useraccount.AccountNumberIDTable,
+			Columns: []string{useraccount.AccountNumberIDColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(transactionhistory.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

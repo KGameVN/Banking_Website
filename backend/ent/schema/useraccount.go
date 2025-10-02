@@ -20,18 +20,20 @@ func (UserAccount) Annotations() []schema.Annotation {
 
 func (UserAccount) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("account_number"),
 		field.Int64("balance"),
+		field.Int64("account_number").Unique(), // thêm trường account
 	}
 }
 
 func (UserAccount) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("user", User.Type).
-			Ref("accounts").
-			Unique(),
+			Ref("user_id").
+			Unique().
+			Required(),
 		edge.To("transactions", Transaction.Type),
 		edge.To("outgoing_transfers", Transfer.Type),
 		edge.To("incoming_transfers", Transfer.Type),
+		edge.To("account_number_id", TransactionHistory.Type),
 	}
 }

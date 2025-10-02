@@ -40,25 +40,23 @@ func (uc *UserCreate) SetPassword(s string) *UserCreate {
 	return uc
 }
 
-// SetAccountNumber sets the "account_number" field.
-func (uc *UserCreate) SetAccountNumber(i int64) *UserCreate {
-	uc.mutation.SetAccountNumber(i)
+// SetUserIDID sets the "user_id" edge to the UserAccount entity by ID.
+func (uc *UserCreate) SetUserIDID(id int) *UserCreate {
+	uc.mutation.SetUserIDID(id)
 	return uc
 }
 
-// AddAccountIDs adds the "accounts" edge to the UserAccount entity by IDs.
-func (uc *UserCreate) AddAccountIDs(ids ...int) *UserCreate {
-	uc.mutation.AddAccountIDs(ids...)
-	return uc
-}
-
-// AddAccounts adds the "accounts" edges to the UserAccount entity.
-func (uc *UserCreate) AddAccounts(u ...*UserAccount) *UserCreate {
-	ids := make([]int, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
+// SetNillableUserIDID sets the "user_id" edge to the UserAccount entity by ID if the given value is not nil.
+func (uc *UserCreate) SetNillableUserIDID(id *int) *UserCreate {
+	if id != nil {
+		uc = uc.SetUserIDID(*id)
 	}
-	return uc.AddAccountIDs(ids...)
+	return uc
+}
+
+// SetUserID sets the "user_id" edge to the UserAccount entity.
+func (uc *UserCreate) SetUserID(u *UserAccount) *UserCreate {
+	return uc.SetUserIDID(u.ID)
 }
 
 // SetProfileID sets the "profile" edge to the UserProfile entity by ID.
@@ -138,9 +136,6 @@ func (uc *UserCreate) check() error {
 	if _, ok := uc.mutation.Password(); !ok {
 		return &ValidationError{Name: "password", err: errors.New(`ent: missing required field "User.password"`)}
 	}
-	if _, ok := uc.mutation.AccountNumber(); !ok {
-		return &ValidationError{Name: "account_number", err: errors.New(`ent: missing required field "User.account_number"`)}
-	}
 	return nil
 }
 
@@ -179,16 +174,12 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 		_spec.SetField(user.FieldPassword, field.TypeString, value)
 		_node.Password = value
 	}
-	if value, ok := uc.mutation.AccountNumber(); ok {
-		_spec.SetField(user.FieldAccountNumber, field.TypeInt64, value)
-		_node.AccountNumber = value
-	}
-	if nodes := uc.mutation.AccountsIDs(); len(nodes) > 0 {
+	if nodes := uc.mutation.UserIDIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
-			Table:   user.AccountsTable,
-			Columns: []string{user.AccountsColumn},
+			Table:   user.UserIDTable,
+			Columns: []string{user.UserIDColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),

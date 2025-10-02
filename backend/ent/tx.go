@@ -16,6 +16,8 @@ type Tx struct {
 	Token *TokenClient
 	// Transaction is the client for interacting with the Transaction builders.
 	Transaction *TransactionClient
+	// TransactionHistory is the client for interacting with the TransactionHistory builders.
+	TransactionHistory *TransactionHistoryClient
 	// Transfer is the client for interacting with the Transfer builders.
 	Transfer *TransferClient
 	// User is the client for interacting with the User builders.
@@ -157,6 +159,7 @@ func (tx *Tx) Client() *Client {
 func (tx *Tx) init() {
 	tx.Token = NewTokenClient(tx.config)
 	tx.Transaction = NewTransactionClient(tx.config)
+	tx.TransactionHistory = NewTransactionHistoryClient(tx.config)
 	tx.Transfer = NewTransferClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 	tx.UserAccount = NewUserAccountClient(tx.config)

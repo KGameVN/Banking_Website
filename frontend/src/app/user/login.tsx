@@ -15,10 +15,12 @@ export default function Login() {
     e.preventDefault();
 
     try {
-      const res = await fetch("http://localhost:8080/login", {
+      const token = localStorage.getItem("authToken")
+      const res = await fetch("http://localhost:8080/api/user/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify({ username, password, rememberMe }), // Gửi username thay vì email
       });

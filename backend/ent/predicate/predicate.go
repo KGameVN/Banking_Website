@@ -12,6 +12,9 @@ type Token func(*sql.Selector)
 // Transaction is the predicate function for transaction builders.
 type Transaction func(*sql.Selector)
 
+// TransactionHistory is the predicate function for transactionhistory builders.
+type TransactionHistory func(*sql.Selector)
+
 // Transfer is the predicate function for transfer builders.
 type Transfer func(*sql.Selector)
 

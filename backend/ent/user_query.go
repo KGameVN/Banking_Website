@@ -22,13 +22,13 @@ import (
 // UserQuery is the builder for querying User entities.
 type UserQuery struct {
 	config
-	ctx          *QueryContext
-	order        []user.OrderOption
-	inters       []Interceptor
-	predicates   []predicate.User
-	withAccounts *UserAccountQuery
-	withProfile  *UserProfileQuery
-	withTokens   *TokenQuery
+	ctx         *QueryContext
+	order       []user.OrderOption
+	inters      []Interceptor
+	predicates  []predicate.User
+	withUserID  *UserAccountQuery
+	withProfile *UserProfileQuery
+	withTokens  *TokenQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -65,8 +65,8 @@ func (uq *UserQuery) Order(o ...user.OrderOption) *UserQuery {
 	return uq
 }
 
-// QueryAccounts chains the current query on the "accounts" edge.
-func (uq *UserQuery) QueryAccounts() *UserAccountQuery {
+// QueryUserID chains the current query on the "user_id" edge.
+func (uq *UserQuery) QueryUserID() *UserAccountQuery {
 	query := (&UserAccountClient{config: uq.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := uq.prepareQuery(ctx); err != nil {
@@ -79,7 +79,7 @@ func (uq *UserQuery) QueryAccounts() *UserAccountQuery {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(user.Table, user.FieldID, selector),
 			sqlgraph.To(useraccount.Table, useraccount.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, user.AccountsTable, user.AccountsColumn),
+			sqlgraph.Edge(sqlgraph.O2O, false, user.UserIDTable, user.UserIDColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
 		return fromU, nil
@@ -318,28 +318,28 @@ func (uq *UserQuery) Clone() *UserQuery {
 		return nil
 	}
 	return &UserQuery{
-		config:       uq.config,
-		ctx:          uq.ctx.Clone(),
-		order:        append([]user.OrderOption{}, uq.order...),
-		inters:       append([]Interceptor{}, uq.inters...),
-		predicates:   append([]predicate.User{}, uq.predicates...),
-		withAccounts: uq.withAccounts.Clone(),
-		withProfile:  uq.withProfile.Clone(),
-		withTokens:   uq.withTokens.Clone(),
+		config:      uq.config,
+		ctx:         uq.ctx.Clone(),
+		order:       append([]user.OrderOption{}, uq.order...),
+		inters:      append([]Interceptor{}, uq.inters...),
+		predicates:  append([]predicate.User{}, uq.predicates...),
+		withUserID:  uq.withUserID.Clone(),
+		withProfile: uq.withProfile.Clone(),
+		withTokens:  uq.withTokens.Clone(),
 		// clone intermediate query.
 		sql:  uq.sql.Clone(),
 		path: uq.path,
 	}
 }
 
-// WithAccounts tells the query-builder to eager-load the nodes that are connected to
-// the "accounts" edge. The optional arguments are used to configure the query builder of the edge.
-func (uq *UserQuery) WithAccounts(opts ...func(*UserAccountQuery)) *UserQuery {
+// WithUserID tells the query-builder to eager-load the nodes that are connected to
+// the "user_id" edge. The optional arguments are used to configure the query builder of the edge.
+func (uq *UserQuery) WithUserID(opts ...func(*UserAccountQuery)) *UserQuery {
 	query := (&UserAccountClient{config: uq.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	uq.withAccounts = query
+	uq.withUserID = query
 	return uq
 }
 
@@ -444,7 +444,7 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 		nodes       = []*User{}
 		_spec       = uq.querySpec()
 		loadedTypes = [3]bool{
-			uq.withAccounts != nil,
+			uq.withUserID != nil,
 			uq.withProfile != nil,
 			uq.withTokens != nil,
 		}
@@ -467,10 +467,9 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := uq.withAccounts; query != nil {
-		if err := uq.loadAccounts(ctx, query, nodes,
-			func(n *User) { n.Edges.Accounts = []*UserAccount{} },
-			func(n *User, e *UserAccount) { n.Edges.Accounts = append(n.Edges.Accounts, e) }); err != nil {
+	if query := uq.withUserID; query != nil {
+		if err := uq.loadUserID(ctx, query, nodes, nil,
+			func(n *User, e *UserAccount) { n.Edges.UserID = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -490,32 +489,29 @@ func (uq *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	return nodes, nil
 }
 
-func (uq *UserQuery) loadAccounts(ctx context.Context, query *UserAccountQuery, nodes []*User, init func(*User), assign func(*User, *UserAccount)) error {
+func (uq *UserQuery) loadUserID(ctx context.Context, query *UserAccountQuery, nodes []*User, init func(*User), assign func(*User, *UserAccount)) error {
 	fks := make([]driver.Value, 0, len(nodes))
 	nodeids := make(map[int]*User)
 	for i := range nodes {
 		fks = append(fks, nodes[i].ID)
 		nodeids[nodes[i].ID] = nodes[i]
-		if init != nil {
-			init(nodes[i])
-		}
 	}
 	query.withFKs = true
 	query.Where(predicate.UserAccount(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(user.AccountsColumn), fks...))
+		s.Where(sql.InValues(s.C(user.UserIDColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.user_accounts
+		fk := n.user_user_id
 		if fk == nil {
-			return fmt.Errorf(`foreign-key "user_accounts" is nil for node %v`, n.ID)
+			return fmt.Errorf(`foreign-key "user_user_id" is nil for node %v`, n.ID)
 		}
 		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "user_accounts" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "user_user_id" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

@@ -9,6 +9,7 @@ import (
 
 	"comb.com/banking/ent/predicate"
 	"comb.com/banking/ent/transaction"
+	"comb.com/banking/ent/transactionhistory"
 	"comb.com/banking/ent/transfer"
 	"comb.com/banking/ent/user"
 	"comb.com/banking/ent/useraccount"
@@ -27,27 +28,6 @@ type UserAccountUpdate struct {
 // Where appends a list predicates to the UserAccountUpdate builder.
 func (uau *UserAccountUpdate) Where(ps ...predicate.UserAccount) *UserAccountUpdate {
 	uau.mutation.Where(ps...)
-	return uau
-}
-
-// SetAccountNumber sets the "account_number" field.
-func (uau *UserAccountUpdate) SetAccountNumber(i int64) *UserAccountUpdate {
-	uau.mutation.ResetAccountNumber()
-	uau.mutation.SetAccountNumber(i)
-	return uau
-}
-
-// SetNillableAccountNumber sets the "account_number" field if the given value is not nil.
-func (uau *UserAccountUpdate) SetNillableAccountNumber(i *int64) *UserAccountUpdate {
-	if i != nil {
-		uau.SetAccountNumber(*i)
-	}
-	return uau
-}
-
-// AddAccountNumber adds i to the "account_number" field.
-func (uau *UserAccountUpdate) AddAccountNumber(i int64) *UserAccountUpdate {
-	uau.mutation.AddAccountNumber(i)
 	return uau
 }
 
@@ -72,17 +52,30 @@ func (uau *UserAccountUpdate) AddBalance(i int64) *UserAccountUpdate {
 	return uau
 }
 
-// SetUserID sets the "user" edge to the User entity by ID.
-func (uau *UserAccountUpdate) SetUserID(id int) *UserAccountUpdate {
-	uau.mutation.SetUserID(id)
+// SetAccountNumber sets the "account_number" field.
+func (uau *UserAccountUpdate) SetAccountNumber(i int64) *UserAccountUpdate {
+	uau.mutation.ResetAccountNumber()
+	uau.mutation.SetAccountNumber(i)
 	return uau
 }
 
-// SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
-func (uau *UserAccountUpdate) SetNillableUserID(id *int) *UserAccountUpdate {
-	if id != nil {
-		uau = uau.SetUserID(*id)
+// SetNillableAccountNumber sets the "account_number" field if the given value is not nil.
+func (uau *UserAccountUpdate) SetNillableAccountNumber(i *int64) *UserAccountUpdate {
+	if i != nil {
+		uau.SetAccountNumber(*i)
 	}
+	return uau
+}
+
+// AddAccountNumber adds i to the "account_number" field.
+func (uau *UserAccountUpdate) AddAccountNumber(i int64) *UserAccountUpdate {
+	uau.mutation.AddAccountNumber(i)
+	return uau
+}
+
+// SetUserID sets the "user" edge to the User entity by ID.
+func (uau *UserAccountUpdate) SetUserID(id int) *UserAccountUpdate {
+	uau.mutation.SetUserID(id)
 	return uau
 }
 
@@ -134,6 +127,21 @@ func (uau *UserAccountUpdate) AddIncomingTransfers(t ...*Transfer) *UserAccountU
 		ids[i] = t[i].ID
 	}
 	return uau.AddIncomingTransferIDs(ids...)
+}
+
+// AddAccountNumberIDIDs adds the "account_number_id" edge to the TransactionHistory entity by IDs.
+func (uau *UserAccountUpdate) AddAccountNumberIDIDs(ids ...int) *UserAccountUpdate {
+	uau.mutation.AddAccountNumberIDIDs(ids...)
+	return uau
+}
+
+// AddAccountNumberID adds the "account_number_id" edges to the TransactionHistory entity.
+func (uau *UserAccountUpdate) AddAccountNumberID(t ...*TransactionHistory) *UserAccountUpdate {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return uau.AddAccountNumberIDIDs(ids...)
 }
 
 // Mutation returns the UserAccountMutation object of the builder.
@@ -210,6 +218,27 @@ func (uau *UserAccountUpdate) RemoveIncomingTransfers(t ...*Transfer) *UserAccou
 	return uau.RemoveIncomingTransferIDs(ids...)
 }
 
+// ClearAccountNumberID clears all "account_number_id" edges to the TransactionHistory entity.
+func (uau *UserAccountUpdate) ClearAccountNumberID() *UserAccountUpdate {
+	uau.mutation.ClearAccountNumberID()
+	return uau
+}
+
+// RemoveAccountNumberIDIDs removes the "account_number_id" edge to TransactionHistory entities by IDs.
+func (uau *UserAccountUpdate) RemoveAccountNumberIDIDs(ids ...int) *UserAccountUpdate {
+	uau.mutation.RemoveAccountNumberIDIDs(ids...)
+	return uau
+}
+
+// RemoveAccountNumberID removes "account_number_id" edges to TransactionHistory entities.
+func (uau *UserAccountUpdate) RemoveAccountNumberID(t ...*TransactionHistory) *UserAccountUpdate {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return uau.RemoveAccountNumberIDIDs(ids...)
+}
+
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (uau *UserAccountUpdate) Save(ctx context.Context) (int, error) {
 	return withHooks(ctx, uau.sqlSave, uau.mutation, uau.hooks)
@@ -237,7 +266,18 @@ func (uau *UserAccountUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (uau *UserAccountUpdate) check() error {
+	if uau.mutation.UserCleared() && len(uau.mutation.UserIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "UserAccount.user"`)
+	}
+	return nil
+}
+
 func (uau *UserAccountUpdate) sqlSave(ctx context.Context) (n int, err error) {
+	if err := uau.check(); err != nil {
+		return n, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(useraccount.Table, useraccount.Columns, sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt))
 	if ps := uau.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -246,21 +286,21 @@ func (uau *UserAccountUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := uau.mutation.AccountNumber(); ok {
-		_spec.SetField(useraccount.FieldAccountNumber, field.TypeInt64, value)
-	}
-	if value, ok := uau.mutation.AddedAccountNumber(); ok {
-		_spec.AddField(useraccount.FieldAccountNumber, field.TypeInt64, value)
-	}
 	if value, ok := uau.mutation.Balance(); ok {
 		_spec.SetField(useraccount.FieldBalance, field.TypeInt64, value)
 	}
 	if value, ok := uau.mutation.AddedBalance(); ok {
 		_spec.AddField(useraccount.FieldBalance, field.TypeInt64, value)
 	}
+	if value, ok := uau.mutation.AccountNumber(); ok {
+		_spec.SetField(useraccount.FieldAccountNumber, field.TypeInt64, value)
+	}
+	if value, ok := uau.mutation.AddedAccountNumber(); ok {
+		_spec.AddField(useraccount.FieldAccountNumber, field.TypeInt64, value)
+	}
 	if uau.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: true,
 			Table:   useraccount.UserTable,
 			Columns: []string{useraccount.UserColumn},
@@ -273,7 +313,7 @@ func (uau *UserAccountUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if nodes := uau.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: true,
 			Table:   useraccount.UserTable,
 			Columns: []string{useraccount.UserColumn},
@@ -422,6 +462,51 @@ func (uau *UserAccountUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if uau.mutation.AccountNumberIDCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   useraccount.AccountNumberIDTable,
+			Columns: []string{useraccount.AccountNumberIDColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(transactionhistory.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uau.mutation.RemovedAccountNumberIDIDs(); len(nodes) > 0 && !uau.mutation.AccountNumberIDCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   useraccount.AccountNumberIDTable,
+			Columns: []string{useraccount.AccountNumberIDColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(transactionhistory.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uau.mutation.AccountNumberIDIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   useraccount.AccountNumberIDTable,
+			Columns: []string{useraccount.AccountNumberIDColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(transactionhistory.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, uau.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{useraccount.Label}
@@ -440,27 +525,6 @@ type UserAccountUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *UserAccountMutation
-}
-
-// SetAccountNumber sets the "account_number" field.
-func (uauo *UserAccountUpdateOne) SetAccountNumber(i int64) *UserAccountUpdateOne {
-	uauo.mutation.ResetAccountNumber()
-	uauo.mutation.SetAccountNumber(i)
-	return uauo
-}
-
-// SetNillableAccountNumber sets the "account_number" field if the given value is not nil.
-func (uauo *UserAccountUpdateOne) SetNillableAccountNumber(i *int64) *UserAccountUpdateOne {
-	if i != nil {
-		uauo.SetAccountNumber(*i)
-	}
-	return uauo
-}
-
-// AddAccountNumber adds i to the "account_number" field.
-func (uauo *UserAccountUpdateOne) AddAccountNumber(i int64) *UserAccountUpdateOne {
-	uauo.mutation.AddAccountNumber(i)
-	return uauo
 }
 
 // SetBalance sets the "balance" field.
@@ -484,17 +548,30 @@ func (uauo *UserAccountUpdateOne) AddBalance(i int64) *UserAccountUpdateOne {
 	return uauo
 }
 
-// SetUserID sets the "user" edge to the User entity by ID.
-func (uauo *UserAccountUpdateOne) SetUserID(id int) *UserAccountUpdateOne {
-	uauo.mutation.SetUserID(id)
+// SetAccountNumber sets the "account_number" field.
+func (uauo *UserAccountUpdateOne) SetAccountNumber(i int64) *UserAccountUpdateOne {
+	uauo.mutation.ResetAccountNumber()
+	uauo.mutation.SetAccountNumber(i)
 	return uauo
 }
 
-// SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
-func (uauo *UserAccountUpdateOne) SetNillableUserID(id *int) *UserAccountUpdateOne {
-	if id != nil {
-		uauo = uauo.SetUserID(*id)
+// SetNillableAccountNumber sets the "account_number" field if the given value is not nil.
+func (uauo *UserAccountUpdateOne) SetNillableAccountNumber(i *int64) *UserAccountUpdateOne {
+	if i != nil {
+		uauo.SetAccountNumber(*i)
 	}
+	return uauo
+}
+
+// AddAccountNumber adds i to the "account_number" field.
+func (uauo *UserAccountUpdateOne) AddAccountNumber(i int64) *UserAccountUpdateOne {
+	uauo.mutation.AddAccountNumber(i)
+	return uauo
+}
+
+// SetUserID sets the "user" edge to the User entity by ID.
+func (uauo *UserAccountUpdateOne) SetUserID(id int) *UserAccountUpdateOne {
+	uauo.mutation.SetUserID(id)
 	return uauo
 }
 
@@ -546,6 +623,21 @@ func (uauo *UserAccountUpdateOne) AddIncomingTransfers(t ...*Transfer) *UserAcco
 		ids[i] = t[i].ID
 	}
 	return uauo.AddIncomingTransferIDs(ids...)
+}
+
+// AddAccountNumberIDIDs adds the "account_number_id" edge to the TransactionHistory entity by IDs.
+func (uauo *UserAccountUpdateOne) AddAccountNumberIDIDs(ids ...int) *UserAccountUpdateOne {
+	uauo.mutation.AddAccountNumberIDIDs(ids...)
+	return uauo
+}
+
+// AddAccountNumberID adds the "account_number_id" edges to the TransactionHistory entity.
+func (uauo *UserAccountUpdateOne) AddAccountNumberID(t ...*TransactionHistory) *UserAccountUpdateOne {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return uauo.AddAccountNumberIDIDs(ids...)
 }
 
 // Mutation returns the UserAccountMutation object of the builder.
@@ -622,6 +714,27 @@ func (uauo *UserAccountUpdateOne) RemoveIncomingTransfers(t ...*Transfer) *UserA
 	return uauo.RemoveIncomingTransferIDs(ids...)
 }
 
+// ClearAccountNumberID clears all "account_number_id" edges to the TransactionHistory entity.
+func (uauo *UserAccountUpdateOne) ClearAccountNumberID() *UserAccountUpdateOne {
+	uauo.mutation.ClearAccountNumberID()
+	return uauo
+}
+
+// RemoveAccountNumberIDIDs removes the "account_number_id" edge to TransactionHistory entities by IDs.
+func (uauo *UserAccountUpdateOne) RemoveAccountNumberIDIDs(ids ...int) *UserAccountUpdateOne {
+	uauo.mutation.RemoveAccountNumberIDIDs(ids...)
+	return uauo
+}
+
+// RemoveAccountNumberID removes "account_number_id" edges to TransactionHistory entities.
+func (uauo *UserAccountUpdateOne) RemoveAccountNumberID(t ...*TransactionHistory) *UserAccountUpdateOne {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return uauo.RemoveAccountNumberIDIDs(ids...)
+}
+
 // Where appends a list predicates to the UserAccountUpdate builder.
 func (uauo *UserAccountUpdateOne) Where(ps ...predicate.UserAccount) *UserAccountUpdateOne {
 	uauo.mutation.Where(ps...)
@@ -662,7 +775,18 @@ func (uauo *UserAccountUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (uauo *UserAccountUpdateOne) check() error {
+	if uauo.mutation.UserCleared() && len(uauo.mutation.UserIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "UserAccount.user"`)
+	}
+	return nil
+}
+
 func (uauo *UserAccountUpdateOne) sqlSave(ctx context.Context) (_node *UserAccount, err error) {
+	if err := uauo.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(useraccount.Table, useraccount.Columns, sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt))
 	id, ok := uauo.mutation.ID()
 	if !ok {
@@ -688,21 +812,21 @@ func (uauo *UserAccountUpdateOne) sqlSave(ctx context.Context) (_node *UserAccou
 			}
 		}
 	}
-	if value, ok := uauo.mutation.AccountNumber(); ok {
-		_spec.SetField(useraccount.FieldAccountNumber, field.TypeInt64, value)
-	}
-	if value, ok := uauo.mutation.AddedAccountNumber(); ok {
-		_spec.AddField(useraccount.FieldAccountNumber, field.TypeInt64, value)
-	}
 	if value, ok := uauo.mutation.Balance(); ok {
 		_spec.SetField(useraccount.FieldBalance, field.TypeInt64, value)
 	}
 	if value, ok := uauo.mutation.AddedBalance(); ok {
 		_spec.AddField(useraccount.FieldBalance, field.TypeInt64, value)
 	}
+	if value, ok := uauo.mutation.AccountNumber(); ok {
+		_spec.SetField(useraccount.FieldAccountNumber, field.TypeInt64, value)
+	}
+	if value, ok := uauo.mutation.AddedAccountNumber(); ok {
+		_spec.AddField(useraccount.FieldAccountNumber, field.TypeInt64, value)
+	}
 	if uauo.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: true,
 			Table:   useraccount.UserTable,
 			Columns: []string{useraccount.UserColumn},
@@ -715,7 +839,7 @@ func (uauo *UserAccountUpdateOne) sqlSave(ctx context.Context) (_node *UserAccou
 	}
 	if nodes := uauo.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
+			Rel:     sqlgraph.O2O,
 			Inverse: true,
 			Table:   useraccount.UserTable,
 			Columns: []string{useraccount.UserColumn},
@@ -857,6 +981,51 @@ func (uauo *UserAccountUpdateOne) sqlSave(ctx context.Context) (_node *UserAccou
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(transfer.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uauo.mutation.AccountNumberIDCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   useraccount.AccountNumberIDTable,
+			Columns: []string{useraccount.AccountNumberIDColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(transactionhistory.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uauo.mutation.RemovedAccountNumberIDIDs(); len(nodes) > 0 && !uauo.mutation.AccountNumberIDCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   useraccount.AccountNumberIDTable,
+			Columns: []string{useraccount.AccountNumberIDColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(transactionhistory.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uauo.mutation.AccountNumberIDIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   useraccount.AccountNumberIDTable,
+			Columns: []string{useraccount.AccountNumberIDColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(transactionhistory.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
