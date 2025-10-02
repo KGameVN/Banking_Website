@@ -8,8 +8,6 @@ import (
 
 func main() {
 	// l := logger.NewLogger()
-	
-
 	c := controller.GetController()
 	c.Start()
 	

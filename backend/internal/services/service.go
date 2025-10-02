@@ -4,7 +4,7 @@ import (
 	"log"
 	"sync"
 
-	"comb.com/banking/repository"
+	"comb.com/banking/internal/repository"
 )
 
 type Service struct {

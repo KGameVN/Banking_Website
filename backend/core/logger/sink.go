@@ -8,12 +8,14 @@ import (
 	"fmt"
 	"os"
 
-	"comb.com/banking/config"
+	"comb.com/banking/internal/config"
 	"github.com/segmentio/kafka-go"
 )
 
+// NOTES: Console log stdout sink
 type Sink interface {
 	Write([]LogEntry) error
+	Close()
 }
 
 type StdoutSink struct{}
@@ -26,6 +28,11 @@ func (s *StdoutSink) Write(entries []LogEntry) error {
 	return nil
 }
 
+func (s *StdoutSink) Close() {
+
+}
+
+// NOTES: FileSink writes log entries to a file
 type FileSink struct {
 	file *os.File
 }
@@ -46,6 +53,13 @@ func (f *FileSink) Write(entries []LogEntry) error {
 	return nil
 }
 
+func (f *FileSink) Close() {
+	if f.file != nil {
+        f.file.Close()
+    }
+}
+
+// NOTES: KafkaSink writes log entries to a Kafka topic
 type KafkaSink struct {
 	writer *kafka.Writer
 }
@@ -62,12 +76,15 @@ func NewKafkaSink(cfg config.KafkaConfig) *KafkaSink {
 	return &KafkaSink{writer: w}
 }
 
-func (s *KafkaSink) Write(msg string) error {
-	return s.writer.WriteMessages(context.Background(),
-		kafka.Message{
-			Value: []byte(msg),
-		},
-	)
+func (s *KafkaSink) Write(entries []LogEntry) error {
+	messages := make([]kafka.Message, 0, len(entries))
+	for _, e := range entries {
+		b, _ := json.Marshal(e)
+		messages = append(messages, kafka.Message{
+			Value: b,
+		})
+	}
+	return s.writer.WriteMessages(context.Background(), messages...)
 }
 
 func (s *KafkaSink) Close() error {

@@ -18,23 +18,21 @@ const (
 	FieldEmail = "email"
 	// FieldPassword holds the string denoting the password field in the database.
 	FieldPassword = "password"
-	// FieldAccountNumber holds the string denoting the account_number field in the database.
-	FieldAccountNumber = "account_number"
-	// EdgeAccounts holds the string denoting the accounts edge name in mutations.
-	EdgeAccounts = "accounts"
+	// EdgeUserID holds the string denoting the user_id edge name in mutations.
+	EdgeUserID = "user_id"
 	// EdgeProfile holds the string denoting the profile edge name in mutations.
 	EdgeProfile = "profile"
 	// EdgeTokens holds the string denoting the tokens edge name in mutations.
 	EdgeTokens = "tokens"
 	// Table holds the table name of the user in the database.
 	Table = "users"
-	// AccountsTable is the table that holds the accounts relation/edge.
-	AccountsTable = "user_accounts"
-	// AccountsInverseTable is the table name for the UserAccount entity.
+	// UserIDTable is the table that holds the user_id relation/edge.
+	UserIDTable = "user_accounts"
+	// UserIDInverseTable is the table name for the UserAccount entity.
 	// It exists in this package in order to avoid circular dependency with the "useraccount" package.
-	AccountsInverseTable = "user_accounts"
-	// AccountsColumn is the table column denoting the accounts relation/edge.
-	AccountsColumn = "user_accounts"
+	UserIDInverseTable = "user_accounts"
+	// UserIDColumn is the table column denoting the user_id relation/edge.
+	UserIDColumn = "user_user_id"
 	// ProfileTable is the table that holds the profile relation/edge.
 	ProfileTable = "user_profiles"
 	// ProfileInverseTable is the table name for the UserProfile entity.
@@ -57,7 +55,6 @@ var Columns = []string{
 	FieldUsername,
 	FieldEmail,
 	FieldPassword,
-	FieldAccountNumber,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -93,22 +90,10 @@ func ByPassword(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPassword, opts...).ToFunc()
 }
 
-// ByAccountNumber orders the results by the account_number field.
-func ByAccountNumber(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldAccountNumber, opts...).ToFunc()
-}
-
-// ByAccountsCount orders the results by accounts count.
-func ByAccountsCount(opts ...sql.OrderTermOption) OrderOption {
+// ByUserIDField orders the results by user_id field.
+func ByUserIDField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newAccountsStep(), opts...)
-	}
-}
-
-// ByAccounts orders the results by accounts terms.
-func ByAccounts(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newAccountsStep(), append([]sql.OrderTerm{term}, terms...)...)
+		sqlgraph.OrderByNeighborTerms(s, newUserIDStep(), sql.OrderByField(field, opts...))
 	}
 }
 
@@ -132,11 +117,11 @@ func ByTokens(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newTokensStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
-func newAccountsStep() *sqlgraph.Step {
+func newUserIDStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(AccountsInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, AccountsTable, AccountsColumn),
+		sqlgraph.To(UserIDInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, UserIDTable, UserIDColumn),
 	)
 }
 func newProfileStep() *sqlgraph.Step {

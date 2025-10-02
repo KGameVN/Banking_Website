@@ -15,13 +15,12 @@ func (User) Fields() []ent.Field {
 		field.String("username"),
 		field.String("email"),
 		field.String("password"),
-		field.Int64("account_number").Unique(),
 	}
 }
 
 func (User) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.To("accounts", UserAccount.Type),                                // 1-n
+		edge.To("user_id", UserAccount.Type).Unique(), // 1-1
 		edge.To("profile", UserProfile.Type).Unique(),                        // 1-1
 		edge.To("tokens", Token.Type).StorageKey(edge.Column("user_tokens")), // 1-n
 	}

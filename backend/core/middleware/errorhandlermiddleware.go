@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"comb.com/banking/errors"
+	"comb.com/banking/internal/errors"
 	"github.com/labstack/echo/v4"
 )
 

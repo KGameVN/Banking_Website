@@ -1,0 +1,8 @@
+log:
+  level: info
+  sink: file
+  file_path: "./logs/app.log"
+  batch_size: 50
+kafka:
+  brokers: ["kafka-1:9092","kafka-2:9092"]
+  topic: app-logs

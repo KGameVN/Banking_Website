@@ -3,7 +3,7 @@ package jwt
 import (
 	"time"
 	"fmt"
-	"comb.com/banking/errors"
+	"comb.com/banking/internal/errors"
 	"github.com/golang-jwt/jwt/v5"
 )
 

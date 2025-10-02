@@ -68,11 +68,6 @@ func Password(v string) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldPassword, v))
 }
 
-// AccountNumber applies equality check predicate on the "account_number" field. It's identical to AccountNumberEQ.
-func AccountNumber(v int64) predicate.User {
-	return predicate.User(sql.FieldEQ(FieldAccountNumber, v))
-}
-
 // UsernameEQ applies the EQ predicate on the "username" field.
 func UsernameEQ(v string) predicate.User {
 	return predicate.User(sql.FieldEQ(FieldUsername, v))
@@ -268,61 +263,21 @@ func PasswordContainsFold(v string) predicate.User {
 	return predicate.User(sql.FieldContainsFold(FieldPassword, v))
 }
 
-// AccountNumberEQ applies the EQ predicate on the "account_number" field.
-func AccountNumberEQ(v int64) predicate.User {
-	return predicate.User(sql.FieldEQ(FieldAccountNumber, v))
-}
-
-// AccountNumberNEQ applies the NEQ predicate on the "account_number" field.
-func AccountNumberNEQ(v int64) predicate.User {
-	return predicate.User(sql.FieldNEQ(FieldAccountNumber, v))
-}
-
-// AccountNumberIn applies the In predicate on the "account_number" field.
-func AccountNumberIn(vs ...int64) predicate.User {
-	return predicate.User(sql.FieldIn(FieldAccountNumber, vs...))
-}
-
-// AccountNumberNotIn applies the NotIn predicate on the "account_number" field.
-func AccountNumberNotIn(vs ...int64) predicate.User {
-	return predicate.User(sql.FieldNotIn(FieldAccountNumber, vs...))
-}
-
-// AccountNumberGT applies the GT predicate on the "account_number" field.
-func AccountNumberGT(v int64) predicate.User {
-	return predicate.User(sql.FieldGT(FieldAccountNumber, v))
-}
-
-// AccountNumberGTE applies the GTE predicate on the "account_number" field.
-func AccountNumberGTE(v int64) predicate.User {
-	return predicate.User(sql.FieldGTE(FieldAccountNumber, v))
-}
-
-// AccountNumberLT applies the LT predicate on the "account_number" field.
-func AccountNumberLT(v int64) predicate.User {
-	return predicate.User(sql.FieldLT(FieldAccountNumber, v))
-}
-
-// AccountNumberLTE applies the LTE predicate on the "account_number" field.
-func AccountNumberLTE(v int64) predicate.User {
-	return predicate.User(sql.FieldLTE(FieldAccountNumber, v))
-}
-
-// HasAccounts applies the HasEdge predicate on the "accounts" edge.
-func HasAccounts() predicate.User {
+// HasUserID applies the HasEdge predicate on the "user_id" edge.
+func HasUserID() predicate.User {
 	return predicate.User(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, AccountsTable, AccountsColumn),
+			sqlgraph.Edge(sqlgraph.O2O, false, UserIDTable, UserIDColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasAccountsWith applies the HasEdge predicate on the "accounts" edge with a given conditions (other predicates).
-func HasAccountsWith(preds ...predicate.UserAccount) predicate.User {
+// HasUserIDWith applies the HasEdge predicate on the "user_id" edge with a given conditions (other predicates).
+func HasUserIDWith(preds ...predicate.UserAccount) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
-		step := newAccountsStep()
+		step := newUserIDStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

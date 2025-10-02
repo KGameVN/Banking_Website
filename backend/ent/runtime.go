@@ -7,6 +7,7 @@ import (
 
 	"comb.com/banking/ent/schema"
 	"comb.com/banking/ent/token"
+	"comb.com/banking/ent/transactionhistory"
 )
 
 // The init function reads all schema descriptors with runtime code
@@ -23,4 +24,14 @@ func init() {
 	tokenDescIsUsing := tokenFields[3].Descriptor()
 	// token.DefaultIsUsing holds the default value on creation for the is_using field.
 	token.DefaultIsUsing = tokenDescIsUsing.Default.(bool)
+	transactionhistoryFields := schema.TransactionHistory{}.Fields()
+	_ = transactionhistoryFields
+	// transactionhistoryDescType is the schema descriptor for type field.
+	transactionhistoryDescType := transactionhistoryFields[0].Descriptor()
+	// transactionhistory.TypeValidator is a validator for the "type" field. It is called by the builders before save.
+	transactionhistory.TypeValidator = transactionhistoryDescType.Validators[0].(func(string) error)
+	// transactionhistoryDescCreatedAt is the schema descriptor for created_at field.
+	transactionhistoryDescCreatedAt := transactionhistoryFields[3].Descriptor()
+	// transactionhistory.DefaultCreatedAt holds the default value on creation for the created_at field.
+	transactionhistory.DefaultCreatedAt = transactionhistoryDescCreatedAt.Default.(func() time.Time)
 }

@@ -17,15 +17,15 @@ type UserAccount struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// AccountNumber holds the value of the "account_number" field.
-	AccountNumber int64 `json:"account_number,omitempty"`
 	// Balance holds the value of the "balance" field.
 	Balance int64 `json:"balance,omitempty"`
+	// AccountNumber holds the value of the "account_number" field.
+	AccountNumber int64 `json:"account_number,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UserAccountQuery when eager-loading is set.
-	Edges         UserAccountEdges `json:"edges"`
-	user_accounts *int
-	selectValues  sql.SelectValues
+	Edges        UserAccountEdges `json:"edges"`
+	user_user_id *int
+	selectValues sql.SelectValues
 }
 
 // UserAccountEdges holds the relations/edges for other nodes in the graph.
@@ -38,9 +38,11 @@ type UserAccountEdges struct {
 	OutgoingTransfers []*Transfer `json:"outgoing_transfers,omitempty"`
 	// IncomingTransfers holds the value of the incoming_transfers edge.
 	IncomingTransfers []*Transfer `json:"incoming_transfers,omitempty"`
+	// AccountNumberID holds the value of the account_number_id edge.
+	AccountNumberID []*TransactionHistory `json:"account_number_id,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [4]bool
+	loadedTypes [5]bool
 }
 
 // UserOrErr returns the User value or an error if the edge
@@ -81,14 +83,23 @@ func (e UserAccountEdges) IncomingTransfersOrErr() ([]*Transfer, error) {
 	return nil, &NotLoadedError{edge: "incoming_transfers"}
 }
 
+// AccountNumberIDOrErr returns the AccountNumberID value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserAccountEdges) AccountNumberIDOrErr() ([]*TransactionHistory, error) {
+	if e.loadedTypes[4] {
+		return e.AccountNumberID, nil
+	}
+	return nil, &NotLoadedError{edge: "account_number_id"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*UserAccount) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case useraccount.FieldID, useraccount.FieldAccountNumber, useraccount.FieldBalance:
+		case useraccount.FieldID, useraccount.FieldBalance, useraccount.FieldAccountNumber:
 			values[i] = new(sql.NullInt64)
-		case useraccount.ForeignKeys[0]: // user_accounts
+		case useraccount.ForeignKeys[0]: // user_user_id
 			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -111,24 +122,24 @@ func (ua *UserAccount) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			ua.ID = int(value.Int64)
-		case useraccount.FieldAccountNumber:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field account_number", values[i])
-			} else if value.Valid {
-				ua.AccountNumber = value.Int64
-			}
 		case useraccount.FieldBalance:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field balance", values[i])
 			} else if value.Valid {
 				ua.Balance = value.Int64
 			}
+		case useraccount.FieldAccountNumber:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field account_number", values[i])
+			} else if value.Valid {
+				ua.AccountNumber = value.Int64
+			}
 		case useraccount.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field user_accounts", value)
+				return fmt.Errorf("unexpected type %T for edge-field user_user_id", value)
 			} else if value.Valid {
-				ua.user_accounts = new(int)
-				*ua.user_accounts = int(value.Int64)
+				ua.user_user_id = new(int)
+				*ua.user_user_id = int(value.Int64)
 			}
 		default:
 			ua.selectValues.Set(columns[i], values[i])
@@ -163,6 +174,11 @@ func (ua *UserAccount) QueryIncomingTransfers() *TransferQuery {
 	return NewUserAccountClient(ua.config).QueryIncomingTransfers(ua)
 }
 
+// QueryAccountNumberID queries the "account_number_id" edge of the UserAccount entity.
+func (ua *UserAccount) QueryAccountNumberID() *TransactionHistoryQuery {
+	return NewUserAccountClient(ua.config).QueryAccountNumberID(ua)
+}
+
 // Update returns a builder for updating this UserAccount.
 // Note that you need to call UserAccount.Unwrap() before calling this method if this UserAccount
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -186,11 +202,11 @@ func (ua *UserAccount) String() string {
 	var builder strings.Builder
 	builder.WriteString("UserAccount(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", ua.ID))
-	builder.WriteString("account_number=")
-	builder.WriteString(fmt.Sprintf("%v", ua.AccountNumber))
-	builder.WriteString(", ")
 	builder.WriteString("balance=")
 	builder.WriteString(fmt.Sprintf("%v", ua.Balance))
+	builder.WriteString(", ")
+	builder.WriteString("account_number=")
+	builder.WriteString(fmt.Sprintf("%v", ua.AccountNumber))
 	builder.WriteByte(')')
 	return builder.String()
 }
