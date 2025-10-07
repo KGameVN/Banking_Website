@@ -202,10 +202,8 @@ func (s *Service) GetTransHistory(c echo.Context) error {
 			Message: errors.ErrAccountNotFound.Message, Err: err}
 	}
 
-	fmt.Println(account)
-
-	return c.JSON(http.StatusOK, echo.Map{
-		"message": "GetTransHistory",
+	return api.Success(c, echo.Map{
+		"transactions": account.Edges.AccountNumberID,
 	})
 }
 

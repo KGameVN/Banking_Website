@@ -29,7 +29,7 @@ export default function Login() {
 
       if (res.ok) {
         console.log("Login success:", data);
-        localStorage.setItem("accountNumber", data.user.accountnumber) // stored account number in local storage
+        localStorage.setItem("accountNumber", data.user.account) // stored account number in local storage
         setOpen(false);
         router.push("/dashboard");
       } else {

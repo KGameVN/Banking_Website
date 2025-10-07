@@ -33,7 +33,7 @@ export default function Transaction() {
 
   const handleDeposit = () => {
     reloadTransactionsHistory()
-    // console.log("deposit into account:", amount);
+    console.log("deposit into account:", amount);
   };
 
   const reloadTransactionsHistory = async () => {
