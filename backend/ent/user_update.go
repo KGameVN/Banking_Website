@@ -72,40 +72,23 @@ func (uu *UserUpdate) SetNillablePassword(s *string) *UserUpdate {
 	return uu
 }
 
-// SetAccountNumber sets the "account_number" field.
-func (uu *UserUpdate) SetAccountNumber(i int64) *UserUpdate {
-	uu.mutation.ResetAccountNumber()
-	uu.mutation.SetAccountNumber(i)
+// SetUserIDID sets the "user_id" edge to the UserAccount entity by ID.
+func (uu *UserUpdate) SetUserIDID(id int) *UserUpdate {
+	uu.mutation.SetUserIDID(id)
 	return uu
 }
 
-// SetNillableAccountNumber sets the "account_number" field if the given value is not nil.
-func (uu *UserUpdate) SetNillableAccountNumber(i *int64) *UserUpdate {
-	if i != nil {
-		uu.SetAccountNumber(*i)
+// SetNillableUserIDID sets the "user_id" edge to the UserAccount entity by ID if the given value is not nil.
+func (uu *UserUpdate) SetNillableUserIDID(id *int) *UserUpdate {
+	if id != nil {
+		uu = uu.SetUserIDID(*id)
 	}
 	return uu
 }
 
-// AddAccountNumber adds i to the "account_number" field.
-func (uu *UserUpdate) AddAccountNumber(i int64) *UserUpdate {
-	uu.mutation.AddAccountNumber(i)
-	return uu
-}
-
-// AddAccountIDs adds the "accounts" edge to the UserAccount entity by IDs.
-func (uu *UserUpdate) AddAccountIDs(ids ...int) *UserUpdate {
-	uu.mutation.AddAccountIDs(ids...)
-	return uu
-}
-
-// AddAccounts adds the "accounts" edges to the UserAccount entity.
-func (uu *UserUpdate) AddAccounts(u ...*UserAccount) *UserUpdate {
-	ids := make([]int, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
-	}
-	return uu.AddAccountIDs(ids...)
+// SetUserID sets the "user_id" edge to the UserAccount entity.
+func (uu *UserUpdate) SetUserID(u *UserAccount) *UserUpdate {
+	return uu.SetUserIDID(u.ID)
 }
 
 // SetProfileID sets the "profile" edge to the UserProfile entity by ID.
@@ -147,25 +130,10 @@ func (uu *UserUpdate) Mutation() *UserMutation {
 	return uu.mutation
 }
 
-// ClearAccounts clears all "accounts" edges to the UserAccount entity.
-func (uu *UserUpdate) ClearAccounts() *UserUpdate {
-	uu.mutation.ClearAccounts()
+// ClearUserID clears the "user_id" edge to the UserAccount entity.
+func (uu *UserUpdate) ClearUserID() *UserUpdate {
+	uu.mutation.ClearUserID()
 	return uu
-}
-
-// RemoveAccountIDs removes the "accounts" edge to UserAccount entities by IDs.
-func (uu *UserUpdate) RemoveAccountIDs(ids ...int) *UserUpdate {
-	uu.mutation.RemoveAccountIDs(ids...)
-	return uu
-}
-
-// RemoveAccounts removes "accounts" edges to UserAccount entities.
-func (uu *UserUpdate) RemoveAccounts(u ...*UserAccount) *UserUpdate {
-	ids := make([]int, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
-	}
-	return uu.RemoveAccountIDs(ids...)
 }
 
 // ClearProfile clears the "profile" edge to the UserProfile entity.
@@ -240,18 +208,12 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := uu.mutation.Password(); ok {
 		_spec.SetField(user.FieldPassword, field.TypeString, value)
 	}
-	if value, ok := uu.mutation.AccountNumber(); ok {
-		_spec.SetField(user.FieldAccountNumber, field.TypeInt64, value)
-	}
-	if value, ok := uu.mutation.AddedAccountNumber(); ok {
-		_spec.AddField(user.FieldAccountNumber, field.TypeInt64, value)
-	}
-	if uu.mutation.AccountsCleared() {
+	if uu.mutation.UserIDCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
-			Table:   user.AccountsTable,
-			Columns: []string{user.AccountsColumn},
+			Table:   user.UserIDTable,
+			Columns: []string{user.UserIDColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
@@ -259,28 +221,12 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uu.mutation.RemovedAccountsIDs(); len(nodes) > 0 && !uu.mutation.AccountsCleared() {
+	if nodes := uu.mutation.UserIDIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
-			Table:   user.AccountsTable,
-			Columns: []string{user.AccountsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := uu.mutation.AccountsIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   user.AccountsTable,
-			Columns: []string{user.AccountsColumn},
+			Table:   user.UserIDTable,
+			Columns: []string{user.UserIDColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
@@ -427,40 +373,23 @@ func (uuo *UserUpdateOne) SetNillablePassword(s *string) *UserUpdateOne {
 	return uuo
 }
 
-// SetAccountNumber sets the "account_number" field.
-func (uuo *UserUpdateOne) SetAccountNumber(i int64) *UserUpdateOne {
-	uuo.mutation.ResetAccountNumber()
-	uuo.mutation.SetAccountNumber(i)
+// SetUserIDID sets the "user_id" edge to the UserAccount entity by ID.
+func (uuo *UserUpdateOne) SetUserIDID(id int) *UserUpdateOne {
+	uuo.mutation.SetUserIDID(id)
 	return uuo
 }
 
-// SetNillableAccountNumber sets the "account_number" field if the given value is not nil.
-func (uuo *UserUpdateOne) SetNillableAccountNumber(i *int64) *UserUpdateOne {
-	if i != nil {
-		uuo.SetAccountNumber(*i)
+// SetNillableUserIDID sets the "user_id" edge to the UserAccount entity by ID if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableUserIDID(id *int) *UserUpdateOne {
+	if id != nil {
+		uuo = uuo.SetUserIDID(*id)
 	}
 	return uuo
 }
 
-// AddAccountNumber adds i to the "account_number" field.
-func (uuo *UserUpdateOne) AddAccountNumber(i int64) *UserUpdateOne {
-	uuo.mutation.AddAccountNumber(i)
-	return uuo
-}
-
-// AddAccountIDs adds the "accounts" edge to the UserAccount entity by IDs.
-func (uuo *UserUpdateOne) AddAccountIDs(ids ...int) *UserUpdateOne {
-	uuo.mutation.AddAccountIDs(ids...)
-	return uuo
-}
-
-// AddAccounts adds the "accounts" edges to the UserAccount entity.
-func (uuo *UserUpdateOne) AddAccounts(u ...*UserAccount) *UserUpdateOne {
-	ids := make([]int, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
-	}
-	return uuo.AddAccountIDs(ids...)
+// SetUserID sets the "user_id" edge to the UserAccount entity.
+func (uuo *UserUpdateOne) SetUserID(u *UserAccount) *UserUpdateOne {
+	return uuo.SetUserIDID(u.ID)
 }
 
 // SetProfileID sets the "profile" edge to the UserProfile entity by ID.
@@ -502,25 +431,10 @@ func (uuo *UserUpdateOne) Mutation() *UserMutation {
 	return uuo.mutation
 }
 
-// ClearAccounts clears all "accounts" edges to the UserAccount entity.
-func (uuo *UserUpdateOne) ClearAccounts() *UserUpdateOne {
-	uuo.mutation.ClearAccounts()
+// ClearUserID clears the "user_id" edge to the UserAccount entity.
+func (uuo *UserUpdateOne) ClearUserID() *UserUpdateOne {
+	uuo.mutation.ClearUserID()
 	return uuo
-}
-
-// RemoveAccountIDs removes the "accounts" edge to UserAccount entities by IDs.
-func (uuo *UserUpdateOne) RemoveAccountIDs(ids ...int) *UserUpdateOne {
-	uuo.mutation.RemoveAccountIDs(ids...)
-	return uuo
-}
-
-// RemoveAccounts removes "accounts" edges to UserAccount entities.
-func (uuo *UserUpdateOne) RemoveAccounts(u ...*UserAccount) *UserUpdateOne {
-	ids := make([]int, len(u))
-	for i := range u {
-		ids[i] = u[i].ID
-	}
-	return uuo.RemoveAccountIDs(ids...)
 }
 
 // ClearProfile clears the "profile" edge to the UserProfile entity.
@@ -625,18 +539,12 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	if value, ok := uuo.mutation.Password(); ok {
 		_spec.SetField(user.FieldPassword, field.TypeString, value)
 	}
-	if value, ok := uuo.mutation.AccountNumber(); ok {
-		_spec.SetField(user.FieldAccountNumber, field.TypeInt64, value)
-	}
-	if value, ok := uuo.mutation.AddedAccountNumber(); ok {
-		_spec.AddField(user.FieldAccountNumber, field.TypeInt64, value)
-	}
-	if uuo.mutation.AccountsCleared() {
+	if uuo.mutation.UserIDCleared() {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
-			Table:   user.AccountsTable,
-			Columns: []string{user.AccountsColumn},
+			Table:   user.UserIDTable,
+			Columns: []string{user.UserIDColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
@@ -644,28 +552,12 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uuo.mutation.RemovedAccountsIDs(); len(nodes) > 0 && !uuo.mutation.AccountsCleared() {
+	if nodes := uuo.mutation.UserIDIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
+			Rel:     sqlgraph.O2O,
 			Inverse: false,
-			Table:   user.AccountsTable,
-			Columns: []string{user.AccountsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := uuo.mutation.AccountsIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   user.AccountsTable,
-			Columns: []string{user.AccountsColumn},
+			Table:   user.UserIDTable,
+			Columns: []string{user.UserIDColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(useraccount.FieldID, field.TypeInt),

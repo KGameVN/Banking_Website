@@ -8,13 +8,14 @@ import (
 	"comb.com/banking/ent"
 	"comb.com/banking/ent/token"
 	"comb.com/banking/ent/user"
-	"comb.com/banking/utils"
+	"comb.com/banking/utils/converter"
+	"comb.com/banking/utils/jwt"
 	"github.com/labstack/echo/v4"
 )
 
 func (s Service) Login(c echo.Context) error {
 	// Lấy dữ liệu JSON từ body
-	body, err := utils.JsonToMap(c)
+	body, err := converter.JsonToMap(c)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, echo.Map{"error": "Invalid input"})
 	}
@@ -38,7 +39,7 @@ func (s Service) Login(c echo.Context) error {
 				token.ExpiredtimeGT(time.Now()), // expiredtime > now
 				token.IsUsingEQ(true),           // is_using = true
 			)
-		}).
+		}).WithUserID().
 		Only(c.Request().Context())
 
 	if err != nil {
@@ -51,7 +52,7 @@ func (s Service) Login(c echo.Context) error {
 
 	if len(foundUser.Edges.Tokens) == 0 {
 		// jwt
-		token, err := utils.GenerateJWT(foundUser.Username, password)
+		token, err := jwt.GenerateJWT(foundUser.Username, password)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, echo.Map{"error": "Could not generate token"})
 		}
@@ -71,12 +72,13 @@ func (s Service) Login(c echo.Context) error {
 			log.Println(err)
 			return c.JSON(http.StatusInternalServerError, echo.Map{"error": err})
 		}
+
+		// response
 		return c.JSON(http.StatusOK, echo.Map{
 			"message": "Login successful",
 			"token":   token,
 			"user": echo.Map{
 				"id":            foundUser.ID,
-				"accountnumber": foundUser.AccountNumber,
 				"username":      foundUser.Username,
 				"email":         foundUser.Email,
 			},
@@ -88,7 +90,7 @@ func (s Service) Login(c echo.Context) error {
 		"token":   foundUser.Edges.Tokens[0].Token,
 		"user": echo.Map{
 			"id":            foundUser.ID,
-			"accountnumber": foundUser.AccountNumber,
+			"account":	     foundUser.Edges.UserID.AccountNumber,
 			"username":      foundUser.Username,
 			"email":         foundUser.Email,
 		},
@@ -100,13 +102,6 @@ func (s *Service) ProfileService(c echo.Context) error {
 		"message": "hello",
 	})
 }
-
-func (s *Service) GetTransHistory(c echo.Context) error {
-	return c.JSON(http.StatusOK, echo.Map{
-		"message": "GetTransHistory",
-	})
-}
-
 func (s *Service) Register(c echo.Context) error {
 	return c.JSON(http.StatusOK, echo.Map{
 		"message": "register",

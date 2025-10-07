@@ -12,10 +12,10 @@ const (
 	Label = "user_account"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldAccountNumber holds the string denoting the account_number field in the database.
-	FieldAccountNumber = "account_number"
 	// FieldBalance holds the string denoting the balance field in the database.
 	FieldBalance = "balance"
+	// FieldAccountNumber holds the string denoting the account_number field in the database.
+	FieldAccountNumber = "account_number"
 	// EdgeUser holds the string denoting the user edge name in mutations.
 	EdgeUser = "user"
 	// EdgeTransactions holds the string denoting the transactions edge name in mutations.
@@ -24,6 +24,8 @@ const (
 	EdgeOutgoingTransfers = "outgoing_transfers"
 	// EdgeIncomingTransfers holds the string denoting the incoming_transfers edge name in mutations.
 	EdgeIncomingTransfers = "incoming_transfers"
+	// EdgeAccountNumberID holds the string denoting the account_number_id edge name in mutations.
+	EdgeAccountNumberID = "account_number_id"
 	// Table holds the table name of the useraccount in the database.
 	Table = "user_accounts"
 	// UserTable is the table that holds the user relation/edge.
@@ -32,7 +34,7 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "user" package.
 	UserInverseTable = "users"
 	// UserColumn is the table column denoting the user relation/edge.
-	UserColumn = "user_accounts"
+	UserColumn = "user_user_id"
 	// TransactionsTable is the table that holds the transactions relation/edge.
 	TransactionsTable = "transactions"
 	// TransactionsInverseTable is the table name for the Transaction entity.
@@ -54,19 +56,26 @@ const (
 	IncomingTransfersInverseTable = "transfers"
 	// IncomingTransfersColumn is the table column denoting the incoming_transfers relation/edge.
 	IncomingTransfersColumn = "user_account_incoming_transfers"
+	// AccountNumberIDTable is the table that holds the account_number_id relation/edge.
+	AccountNumberIDTable = "transaction_history"
+	// AccountNumberIDInverseTable is the table name for the TransactionHistory entity.
+	// It exists in this package in order to avoid circular dependency with the "transactionhistory" package.
+	AccountNumberIDInverseTable = "transaction_history"
+	// AccountNumberIDColumn is the table column denoting the account_number_id relation/edge.
+	AccountNumberIDColumn = "account_number_id"
 )
 
 // Columns holds all SQL columns for useraccount fields.
 var Columns = []string{
 	FieldID,
-	FieldAccountNumber,
 	FieldBalance,
+	FieldAccountNumber,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "user_accounts"
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
-	"user_accounts",
+	"user_user_id",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -92,14 +101,14 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByAccountNumber orders the results by the account_number field.
-func ByAccountNumber(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldAccountNumber, opts...).ToFunc()
-}
-
 // ByBalance orders the results by the balance field.
 func ByBalance(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldBalance, opts...).ToFunc()
+}
+
+// ByAccountNumber orders the results by the account_number field.
+func ByAccountNumber(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldAccountNumber, opts...).ToFunc()
 }
 
 // ByUserField orders the results by user field.
@@ -150,11 +159,25 @@ func ByIncomingTransfers(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption
 		sqlgraph.OrderByNeighborTerms(s, newIncomingTransfersStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByAccountNumberIDCount orders the results by account_number_id count.
+func ByAccountNumberIDCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newAccountNumberIDStep(), opts...)
+	}
+}
+
+// ByAccountNumberID orders the results by account_number_id terms.
+func ByAccountNumberID(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newAccountNumberIDStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newUserStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(UserInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, true, UserTable, UserColumn),
+		sqlgraph.Edge(sqlgraph.O2O, true, UserTable, UserColumn),
 	)
 }
 func newTransactionsStep() *sqlgraph.Step {
@@ -176,5 +199,12 @@ func newIncomingTransfersStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(IncomingTransfersInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, IncomingTransfersTable, IncomingTransfersColumn),
+	)
+}
+func newAccountNumberIDStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(AccountNumberIDInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, AccountNumberIDTable, AccountNumberIDColumn),
 	)
 }

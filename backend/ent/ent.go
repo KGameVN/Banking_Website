@@ -11,6 +11,7 @@ import (
 
 	"comb.com/banking/ent/token"
 	"comb.com/banking/ent/transaction"
+	"comb.com/banking/ent/transactionhistory"
 	"comb.com/banking/ent/transfer"
 	"comb.com/banking/ent/user"
 	"comb.com/banking/ent/useraccount"
@@ -78,12 +79,13 @@ var (
 func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			token.Table:       token.ValidColumn,
-			transaction.Table: transaction.ValidColumn,
-			transfer.Table:    transfer.ValidColumn,
-			user.Table:        user.ValidColumn,
-			useraccount.Table: useraccount.ValidColumn,
-			userprofile.Table: userprofile.ValidColumn,
+			token.Table:              token.ValidColumn,
+			transaction.Table:        transaction.ValidColumn,
+			transactionhistory.Table: transactionhistory.ValidColumn,
+			transfer.Table:           transfer.ValidColumn,
+			user.Table:               user.ValidColumn,
+			useraccount.Table:        useraccount.ValidColumn,
+			userprofile.Table:        userprofile.ValidColumn,
 		})
 	})
 	return columnCheck(table, column)

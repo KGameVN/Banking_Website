@@ -4,8 +4,8 @@ import (
 	"log"
 	"sync"
 
-	appmid "comb.com/banking/middleware"
-	"comb.com/banking/services"
+	appmid "comb.com/banking/core/middleware"
+	"comb.com/banking/internal/services"
 	"github.com/labstack/echo/v4"
 	mid "github.com/labstack/echo/v4/middleware"
 )
@@ -67,7 +67,6 @@ func (c *Controller) Start() {
 	if err := c.e.Start(":8080"); err != nil {
 		log.Fatal("Không thể khởi động server: ", err)
 	}
-
 }
 
 // setupRoutes khai báo các endpoint
@@ -85,7 +84,8 @@ func (c *Controller) setupRoutes() error {
 	// account - jwt
 	accountGroup := apiGroup.Group("/account", appmid.JWTMiddleware)
 	accountGroup.GET("/:id", c.services.GetAccountInfo)
-	accountGroup.POST("/transaction/:id", c.services.Transaction)
+	accountGroup.POST("/transaction/:account", c.services.Transaction)
+	accountGroup.GET("/transaction/:account/history", c.services.GetTransHistory)
 	accountGroup.POST("/transfer", c.services.Transfer)
 	return nil
 }

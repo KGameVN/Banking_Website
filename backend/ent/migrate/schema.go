@@ -52,6 +52,28 @@ var (
 			},
 		},
 	}
+	// TransactionHistoryColumns holds the columns for the "transaction_history" table.
+	TransactionHistoryColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "type", Type: field.TypeString},
+		{Name: "amount", Type: field.TypeInt64},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "account_number_id", Type: field.TypeInt},
+	}
+	// TransactionHistoryTable holds the schema information for the "transaction_history" table.
+	TransactionHistoryTable = &schema.Table{
+		Name:       "transaction_history",
+		Columns:    TransactionHistoryColumns,
+		PrimaryKey: []*schema.Column{TransactionHistoryColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "transaction_history_user_accounts_account_number_id",
+				Columns:    []*schema.Column{TransactionHistoryColumns[4]},
+				RefColumns: []*schema.Column{UserAccountsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+	}
 	// TransfersColumns holds the columns for the "transfers" table.
 	TransfersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -85,7 +107,6 @@ var (
 		{Name: "username", Type: field.TypeString},
 		{Name: "email", Type: field.TypeString},
 		{Name: "password", Type: field.TypeString},
-		{Name: "account_number", Type: field.TypeInt64, Unique: true},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{
@@ -96,9 +117,9 @@ var (
 	// UserAccountsColumns holds the columns for the "user_accounts" table.
 	UserAccountsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "account_number", Type: field.TypeInt64},
 		{Name: "balance", Type: field.TypeInt64},
-		{Name: "user_accounts", Type: field.TypeInt, Nullable: true},
+		{Name: "account_number", Type: field.TypeInt64, Unique: true},
+		{Name: "user_user_id", Type: field.TypeInt, Unique: true},
 	}
 	// UserAccountsTable holds the schema information for the "user_accounts" table.
 	UserAccountsTable = &schema.Table{
@@ -107,10 +128,10 @@ var (
 		PrimaryKey: []*schema.Column{UserAccountsColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "user_accounts_users_accounts",
+				Symbol:     "user_accounts_users_user_id",
 				Columns:    []*schema.Column{UserAccountsColumns[3]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
-				OnDelete:   schema.SetNull,
+				OnDelete:   schema.NoAction,
 			},
 		},
 	}
@@ -142,6 +163,7 @@ var (
 	Tables = []*schema.Table{
 		TokensTable,
 		TransactionsTable,
+		TransactionHistoryTable,
 		TransfersTable,
 		UsersTable,
 		UserAccountsTable,
@@ -152,6 +174,10 @@ var (
 func init() {
 	TokensTable.ForeignKeys[0].RefTable = UsersTable
 	TransactionsTable.ForeignKeys[0].RefTable = UserAccountsTable
+	TransactionHistoryTable.ForeignKeys[0].RefTable = UserAccountsTable
+	TransactionHistoryTable.Annotation = &entsql.Annotation{
+		Table: "transaction_history",
+	}
 	TransfersTable.ForeignKeys[0].RefTable = UserAccountsTable
 	TransfersTable.ForeignKeys[1].RefTable = UserAccountsTable
 	UserAccountsTable.ForeignKeys[0].RefTable = UsersTable
