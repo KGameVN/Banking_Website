@@ -42,7 +42,7 @@ func SeedData(ctx context.Context, client *ent.Client) {
 	acc1, err := client.UserAccount.Create().
 		SetBalance(100).
 		SetUser(u1).
-		SetAccountNumber(1111).  // thêm account number
+		SetAccountNumber(1111). // thêm account number
 		Save(ctx)
 	if err != nil {
 		log.Fatalf("failed creating account1: %v", err)
@@ -51,7 +51,7 @@ func SeedData(ctx context.Context, client *ent.Client) {
 	acc2, err := client.UserAccount.Create().
 		SetBalance(1000).
 		SetUser(u2).
-		SetAccountNumber(2222).  // thêm account number
+		SetAccountNumber(2222). // thêm account number
 		Save(ctx)
 	if err != nil {
 		log.Fatalf("failed creating account2: %v", err)
@@ -72,7 +72,7 @@ func SeedData(ctx context.Context, client *ent.Client) {
 
 	// --- Tokens ---
 	_, err = client.Token.Create().
-		SetToken("token_123456").
+		SetToken("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IlVzZXIxIiwicGFzc3dvcmQiOiIxMjM0In0.PXp6WEHdDJXYHhpg_WwmlyRW_u-Y3zrajRn9729Zaxc").
 		SetType("login").
 		SetExpiredtime(time.Now().Add(24 * time.Hour)).
 		SetUser(u1).

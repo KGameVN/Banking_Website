@@ -15,30 +15,70 @@ type Transaction = {
   date: string;
 };
 
+axios.defaults.baseURL = 'http://localhost:8080';
+
 export default function Transaction() {
   const [amount, setAmount] = useState("");
   const [accountNumber, setAccountNumber] = useState<string | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const inittialize = async () => {
+    setAccountNumber(localStorage.getItem("accountNumber"));
+  }
 
   useEffect(() => {
-    setAccountNumber(localStorage.getItem("accountNumber"));
-  }, []);
+    if (accountNumber) {
+      reloadTransactionsHistory();
+    }
+  }, [accountNumber]);
 
   const handleWithDraw = async () => {
-    const res = await axios.post(`/api/account/transaction/${accountNumber}`, { amount: 300 });
+    const x = localStorage.getItem("accountNumber");
+    inittialize()
+    const res = await axios.post(`/api/account/transaction/${x}`,
+      {
+        amount: 300,
+        "type": "with",
+        "time": ""
+      }, {
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("authToken")}`,
+      }
+    });
     console.log(res)
     reloadTransactionsHistory()
     console.log("withdraw from account:", amount);
   };
 
-  const handleDeposit = () => {
+  const handleDeposit = async () => {
+    const x = localStorage.getItem("accountNumber");
+    inittialize()
+    const res = await axios.post(`/api/account/transaction/${x}`,
+      {
+        amount: 1,
+        "type": "dep",
+        "time": ""
+      },
+      {
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem("authToken")}`,
+        }
+      }
+    );
+    console.log(res)
     reloadTransactionsHistory()
     console.log("deposit into account:", amount);
   };
 
   const reloadTransactionsHistory = async () => {
+    inittialize()
+    console.log(accountNumber)
     try {
-      const res = await axios.get(`/api/account/transaction/${accountNumber}/history`);
+      const res = await axios.get(`/api/account/transaction/${accountNumber}/history`, {
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem("authToken")}`,
+        }
+      }
+      );
       setTransactions(res.data.transactions); // gán dữ liệu thẳng từ API
     } catch (err) {
       console.error(err);
