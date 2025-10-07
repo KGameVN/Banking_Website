@@ -11,6 +11,7 @@ ifeq ($(ENV), dev)
 else ifeq ($(ENV), prod)
 	DB_HOST := $(DB_HOST_PROD)
 endif
+
 init: 
 	@cd backend && go get github.com/olekukonko/tablewriter
 	@cd backend && go get github.com/spf13/cobra 
