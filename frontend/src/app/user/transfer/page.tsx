@@ -7,7 +7,7 @@
 import React, { useState } from 'react';
 import style from '../../styles/componentstyle/defaultbuttonstyle.module.css';
 import Button from '../../components/button/button';
-import { useRouter} from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export default function Transfer() {
   const router = useRouter();
@@ -15,10 +15,10 @@ export default function Transfer() {
   const [destinationAccount, setDestinationAccount] = useState<string>('');
   const [bank, setBank] = useState<string>('');
 
-  const sendAmount = async () =>{
+  const sendAmount = async () => {
     console.log("sending to account...")
     const body = {
-      to_account_number : destinationAccount,
+      to_account_number: destinationAccount,
       amount: amount,
       bank: bank
     };
@@ -49,15 +49,27 @@ export default function Transfer() {
   }
 
   return (
-    <div>
-        <span>Welcome To World Bank</span>
-        <div style={{ marginBottom: '1rem' }}>
+    <div style={{
+      backgroundColor: '#272b30',
+    }}>
+      <span>Welcome To World Bank</span>
+      <div style={{ marginBottom: '1rem' }}>
         <label>Số tiền:</label><br />
         <input
           type="number"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
           placeholder="Nhập số tiền"
+          style={{
+            marginTop: '2vh',
+            backgroundColor: 'white',
+            color: 'black',
+            border: '1px solid #ccc',
+            padding: '0.5rem',
+            borderRadius: '4px',
+            width: '30%',
+            boxSizing: 'border-box',
+          }}
         />
       </div>
 
@@ -68,6 +80,16 @@ export default function Transfer() {
           value={destinationAccount}
           onChange={(e) => setDestinationAccount(e.target.value)}
           placeholder="Nhập số tài khoản"
+          style={{
+            marginTop: '2vh',
+            backgroundColor: 'white',
+            color: 'black',
+            border: '1px solid #ccc',
+            padding: '0.5rem',
+            borderRadius: '4px',
+            width: '30%',
+            boxSizing: 'border-box',
+          }}
         />
       </div>
 
@@ -77,15 +99,15 @@ export default function Transfer() {
           value={bank}
           onChange={(e) => setBank(e.target.value)}
         >
-          <option value="">-- Chọn ngân hàng --</option>
-          <option value="VCB">Vietcombank</option>
-          <option value="TCB">Techcombank</option>
-          <option value="BIDV">BIDV</option>
-          <option value="ACB">ACB</option>
-          <option value="MB">MB Bank</option>
+          <option value="" style={{ backgroundColor: 'white' }}>-- Chọn ngân hàng --</option>
+          <option value="VCB" style={{ color: 'black' }}>Vietcombank</option>
+          <option value="TCB" style={{ color: 'black' }}>Techcombank</option>
+          <option value="BIDV" style={{ color: 'black' }}>BIDV</option>
+          <option value="ACB" style={{ color: 'black' }}>ACB</option>
+          <option value="MB" style={{ color: 'black' }}>MB Bank</option>
         </select>
       </div>
-        <Button onClick={sendAmount} label="Confirm" className={style.customButton} />
+      <Button onClick={sendAmount} label="Confirm" className={style.greenButton} />
     </div>
   );
 }

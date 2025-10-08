@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"comb.com/banking/api"
+	"comb.com/banking/ent/transfer"
 	"comb.com/banking/ent/user"
 	"comb.com/banking/ent/useraccount"
 	"comb.com/banking/internal/errors"
@@ -15,7 +16,7 @@ import (
 func (s *Service) GetAccountInfo(c echo.Context) error {
 	userAccount, err := converter.StringToInt64(c.Param("account"))
 	if err != nil {
-		return &errors.AppError{Code: errors.ErrIDIsNotValid.Code, 
+		return &errors.AppError{Code: errors.ErrIDIsNotValid.Code,
 			Message: errors.ErrAccountNotFound.Message, Err: err}
 	}
 
@@ -27,13 +28,13 @@ func (s *Service) GetAccountInfo(c echo.Context) error {
 		Only(ctx)
 
 	if err != nil {
-		return &errors.AppError{Code: errors.ErrAccountNotFound.Code, 
+		return &errors.AppError{Code: errors.ErrAccountNotFound.Code,
 			Message: errors.ErrAccountNotFound.Message, Err: err}
 	}
 
 	return api.Success(c, echo.Map{
-		"user_account":   account.Edges.User,
-		"balance":        account.Balance,
+		"user_account": account.Edges.User,
+		"balance":      account.Balance,
 	})
 
 }
@@ -41,7 +42,7 @@ func (s *Service) GetAccountInfo(c echo.Context) error {
 func (s Service) Transaction(c echo.Context) error {
 	userAccount, err := converter.StringToInt64(c.Param("account"))
 	if err != nil {
-		return &errors.AppError{Code: errors.ErrIDIsNotValid.Code, 
+		return &errors.AppError{Code: errors.ErrIDIsNotValid.Code,
 			Message: errors.ErrAccountNotFound.Message, Err: err}
 	}
 
@@ -52,7 +53,7 @@ func (s Service) Transaction(c echo.Context) error {
 	}
 	var req Request
 	if err := c.Bind(&req); err != nil {
-		return &errors.AppError{Code: errors.ErrInvalidJsonFormat.Code, 
+		return &errors.AppError{Code: errors.ErrInvalidJsonFormat.Code,
 			Message: errors.ErrInvalidJsonFormat.Message, Err: err}
 	}
 
@@ -63,7 +64,7 @@ func (s Service) Transaction(c echo.Context) error {
 		Where(useraccount.AccountNumber(userAccount)).
 		Only(ctx)
 	if err != nil {
-		return &errors.AppError{Code: errors.ErrAccountNotFound.Code, 
+		return &errors.AppError{Code: errors.ErrAccountNotFound.Code,
 			Message: errors.ErrAccountNotFound.Message, Err: err}
 	}
 
@@ -73,7 +74,7 @@ func (s Service) Transaction(c echo.Context) error {
 
 	newBalance := account.Balance + req.Amount
 	if newBalance < 0 {
-		return &errors.AppError{Code: errors.ErrNotEnoughBalance.Code, 
+		return &errors.AppError{Code: errors.ErrNotEnoughBalance.Code,
 			Message: errors.ErrNotEnoughBalance.Message, Err: err}
 	}
 
@@ -82,7 +83,7 @@ func (s Service) Transaction(c echo.Context) error {
 		SetBalance(newBalance).
 		Save(ctx)
 	if err != nil {
-		return &errors.AppError{Code: errors.ErrCanUpdateDB.Code, 
+		return &errors.AppError{Code: errors.ErrCanUpdateDB.Code,
 			Message: errors.ErrCanUpdateDB.Message, Err: err}
 	}
 
@@ -90,12 +91,11 @@ func (s Service) Transaction(c echo.Context) error {
 }
 
 func (s Service) Transfer(c echo.Context) error {
-	// userID := c.Get("userID").(int)
 
 	type Request struct {
-		FromAccount int `json:"from_account_number"`
+		FromAccount int   `json:"from_account_number"`
 		ToAccount   int   `json:"to_account_number"`
-		Amount            int64 `json:"amount"`
+		Amount      int64 `json:"amount"`
 	}
 
 	var req Request
@@ -104,6 +104,15 @@ func (s Service) Transfer(c echo.Context) error {
 	}
 
 	ctx := c.Request().Context()
+	// 1. Tạo bản ghi transfer
+	// transferRecord, err := s.Repository.DbClient.Transfer.Create().
+	// 	SetFromAccountNumber(req.FromAccount).
+	// 	SetToAccount(req.ToAccount).
+	// 	SetBalance(req.Amount).
+	// 	Save(ctx)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to create transfer: %w", err)
+	// }
 
 	// ✅ Bắt đầu transaction
 	tx, err := s.Repository.DbClient.Tx(ctx)
@@ -174,29 +183,31 @@ func (s Service) Transfer(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, echo.Map{"error": "Không thể hoàn tất giao dịch"})
 	}
 
-	return c.JSON(http.StatusOK, echo.Map{
-		"message": "Chuyển khoản thành công",
+	return api.Success(c, echo.Map{
+		"Source Account":      fromAcc,
+		"Destination Account": toAcc,
+		"Transferred Amount":  req.Amount,
+		"Status":              "Success",
+		"Transfer ID":         fromAcc.ID,
 	})
 }
-
 
 func (s *Service) GetTransHistory(c echo.Context) error {
 	userAccount, err := converter.StringToInt64(c.Param("account"))
 	if err != nil {
-		return &errors.AppError{Code: errors.ErrIDIsNotValid.Code, 
+		return &errors.AppError{Code: errors.ErrIDIsNotValid.Code,
 			Message: errors.ErrAccountNotFound.Message, Err: err}
 	}
-
 
 	ctx := c.Request().Context()
 
 	account, err := s.Repository.DbClient.UserAccount.
 		Query().
 		Where(useraccount.AccountNumberEQ(userAccount)).
-		WithAccountNumberID().  // eager load transactions
+		WithAccountNumberID(). // eager load transactions
 		Only(ctx)
 	if err != nil {
-		return &errors.AppError{Code: errors.ErrAccountNotFound.Code, 
+		return &errors.AppError{Code: errors.ErrAccountNotFound.Code,
 			Message: errors.ErrAccountNotFound.Message, Err: err}
 	}
 
@@ -204,4 +215,3 @@ func (s *Service) GetTransHistory(c echo.Context) error {
 		"transactions": account.Edges.AccountNumberID,
 	})
 }
-
