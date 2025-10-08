@@ -21,57 +21,9 @@ export default function Transaction() {
   const [amount, setAmount] = useState("");
   const [accountNumber, setAccountNumber] = useState<string | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const inittialize = async () => {
-    setAccountNumber(localStorage.getItem("accountNumber"));
-  }
-
-  useEffect(() => {
-    if (accountNumber) {
-      reloadTransactionsHistory();
-    }
-  }, [accountNumber]);
-
-  const handleWithDraw = async () => {
-    const x = localStorage.getItem("accountNumber");
-    inittialize()
-    const res = await axios.post(`/api/account/transaction/${x}`,
-      {
-        amount: 300,
-        "type": "with",
-        "time": ""
-      }, {
-      headers: {
-        "Authorization": `Bearer ${localStorage.getItem("authToken")}`,
-      }
-    });
-    console.log(res)
-    reloadTransactionsHistory()
-    console.log("withdraw from account:", amount);
-  };
-
-  const handleDeposit = async () => {
-    const x = localStorage.getItem("accountNumber");
-    inittialize()
-    const res = await axios.post(`/api/account/transaction/${x}`,
-      {
-        amount: 1,
-        "type": "dep",
-        "time": ""
-      },
-      {
-        headers: {
-          "Authorization": `Bearer ${localStorage.getItem("authToken")}`,
-        }
-      }
-    );
-    console.log(res)
-    reloadTransactionsHistory()
-    console.log("deposit into account:", amount);
-  };
+  const [result, setResult] = useState("Processing...");
 
   const reloadTransactionsHistory = async () => {
-    inittialize()
-    console.log(accountNumber)
     try {
       const res = await axios.get(`/api/account/transaction/${accountNumber}/history`, {
         headers: {
@@ -79,10 +31,39 @@ export default function Transaction() {
         }
       }
       );
-      setTransactions(res.data.transactions); // gán dữ liệu thẳng từ API
+      console.log(res)
+      setTransactions(res.data.data.transactions); // gán dữ liệu thẳng từ API
     } catch (err) {
       console.error(err);
     }
+  }
+
+  useEffect(() => {
+    setAccountNumber(localStorage.getItem("accountNumber"));
+    if (accountNumber) {
+      reloadTransactionsHistory();
+    }
+  }, [accountNumber]);
+
+  const handleTransaction = async (type: "dep" | "with") => {
+    try {
+      const res = await axios.post(`/api/account/transaction/${accountNumber}`,
+        {
+          "amount": parseInt(amount),
+          "type": type,
+          "time": ""
+        }, {
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem("authToken")}`,
+        }
+      });
+      if (res.status === 200) {
+        setResult("Transaction successful!. Your new balance is" + res.data.newBalance);
+      }
+      reloadTransactionsHistory()
+    } catch (err) {
+      console.error(err);
+    };
   }
 
   return (
@@ -99,8 +80,9 @@ export default function Transaction() {
 
         {/* Các nút giao dịch */}
         <div className="mt-4 space-y-2">
-          <Button onClick={handleWithDraw} label="Withdraw" className={style.greenButton} />
-          <Button onClick={handleDeposit} label="Deposit" className={style.redButton} />
+          <Button onClick={() => handleTransaction("with")} label="Withdraw" className={style.greenButton} />
+          <Button onClick={() => handleTransaction("dep")} label="Deposit" className={style.redButton} />
+          <p>Result: {result} </p>
         </div>
       </div>
 
@@ -119,10 +101,10 @@ export default function Transaction() {
           <tbody>
             {transactions.map((t: Transaction) => (
               <tr key={t.id}>
-                <td className="border border-gray-300 text-gray-800 px-4 py-2">{t.id}</td>
-                <td className="border border-gray-300 text-gray-800 px-4 py-2">{t.type}</td>
-                <td className="border border-gray-300 text-gray-800 px-4 py-2">{t.amount}</td>
-                <td className="border border-gray-300 text-gray-800 px-4 py-2">{new Date(t.date).toLocaleString()}</td>
+                <td className="bg-gray-100 border border-gray-300 text-gray-800 px-4 py-2">{t.id}</td>
+                <td className="bg-gray-100 border border-gray-300 text-gray-800 px-4 py-2">{t.type}</td>
+                <td className="bg-gray-100 border border-gray-300 text-gray-800 px-4 py-2">{t.amount}</td>
+                <td className="bg-gray-100 border border-gray-300 text-gray-800 px-4 py-2">{new Date(t.date).toLocaleString()}</td>
               </tr>
             ))}
           </tbody>
